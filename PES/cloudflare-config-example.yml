@@ -1,0 +1,14 @@
+# Cloudflare Tunnel Configuratie Voorbeeld
+# Plaats dit bestand in: ~/.cloudflared/config.yml
+
+# Vervang <tunnel-id> met je echte tunnel ID
+tunnel: <tunnel-id>
+credentials-file: /Users/nicky/.cloudflared/<tunnel-id>.json
+
+ingress:
+  # Je phishing simulator applicatie
+  - hostname: phishing.jouw-domein.com
+    service: http://localhost:5003
+  
+  # Fallback voor alle andere requests
+  - service: http_status:404

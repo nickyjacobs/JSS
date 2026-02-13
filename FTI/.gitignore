@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+# config.py is committed (uses env vars); ignore only if you use a local copy with secrets
+# config.py
+*.log
+.DS_Store
+
+# Test files
+spoof.exe
+*.exe
+*.dll
+*.bin
+tests/*.exe
+tests/*.dll
+tests/*.bin
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db

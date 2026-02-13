@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Instellingen - Phishing Email Simulator{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Email Configuratie</h2>
+    
+    {% if config.use_oauth2 %}
+    <div style="background-color: #e7f3ff; color: #004085; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        🔐 OAuth2 / Microsoft Graph API is ingeschakeld
+        {% if config.configured %}
+        <br>✓ Configuratie compleet
+        {% else %}
+        <br>⚠️ Vul Client ID en Client Secret in
+        {% endif %}
+    </div>
+    {% if config.configured %}
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('auth_login') }}" class="btn btn-success">OAuth2 Login</a>
+        <small style="display: block; margin-top: 5px;">Log in met je Microsoft account om emails te kunnen versturen</small>
+    </div>
+    {% endif %}
+    {% elif config.configured %}
+    <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        ✓ Email configuratie is compleet en actief (SMTP)
+    </div>
+    {% else %}
+    <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        ⚠️ Email configuratie is niet compleet. Emails worden niet verzonden (demo mode).
+    </div>
+    {% endif %}
+    
+    {% if config.use_oauth2 %}
+    <div class="card" style="margin-top: 20px;">
+        <h3>OAuth2 / Microsoft Graph API Configuratie</h3>
+        <p><strong>Client ID:</strong> {{ config.azure_client_id }}</p>
+        <p><strong>Tenant ID:</strong> {{ config.azure_tenant_id }}</p>
+        <p><strong>Redirect URI:</strong> {{ config.azure_redirect_uri }}</p>
+        <p><small>⚠️ Om deze instellingen te wijzigen, pas je het .env bestand aan en herstart je de applicatie.</small></p>
+    </div>
+    {% endif %}
+    
+    <form method="POST" id="settingsForm">
+        {% if not config.use_oauth2 %}
+        <div class="form-group">
+            <label for="smtp_server">SMTP Server:</label>
+            <input type="text" id="smtp_server" name="smtp_server" value="{{ config.smtp_server }}" required>
+            <small>Bijv: smtp.gmail.com, smtp-mail.outlook.com</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="smtp_port">SMTP Poort:</label>
+            <input type="number" id="smtp_port" name="smtp_port" value="{{ config.smtp_port }}" required>
+            <small>Meestal 587 (TLS) of 465 (SSL)</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="smtp_username">SMTP Gebruikersnaam (Email):</label>
+            <input type="email" id="smtp_username" name="smtp_username" value="{{ config.smtp_username }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="smtp_password">SMTP Wachtwoord:</label>
+            <input type="password" id="smtp_password" name="smtp_password" value="{{ config.smtp_password if config.smtp_password != '***' else '' }}" required>
+            <small>Voor Gmail: gebruik een <a href="https://myaccount.google.com/apppasswords" target="_blank">App Password</a></small>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="smtp_use_tls" name="smtp_use_tls" {% if config.smtp_use_tls %}checked{% endif %}>
+                Gebruik TLS (meestal aan voor poort 587)
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="smtp_use_ssl" name="smtp_use_ssl" {% if config.smtp_use_ssl %}checked{% endif %}>
+                Gebruik SSL (meestal voor poort 465)
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label for="base_url">Base URL (voor tracking links):</label>
+            <input type="text" id="base_url" name="base_url" value="{{ config.base_url }}" required>
+            <small>Moet publiek toegankelijk zijn (bijv: https://jouw-domein.com)</small>
+        </div>
+        
+        {% if not config.use_oauth2 %}
+        <button type="submit" class="btn btn-success">Configuratie Opslaan</button>
+        {% endif %}
+        <button type="button" onclick="testEmail()" class="btn">Test Email Verzenden</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Huidige Configuratie</h3>
+    <table>
+        <tr>
+            <th>Instelling</th>
+            <th>Waarde</th>
+        </tr>
+        <tr>
+            <td>SMTP Server</td>
+            <td>{{ config.smtp_server }}</td>
+        </tr>
+        <tr>
+            <td>SMTP Poort</td>
+            <td>{{ config.smtp_port }}</td>
+        </tr>
+        <tr>
+            <td>SMTP Gebruikersnaam</td>
+            <td>{{ config.smtp_username }}</td>
+        </tr>
+        <tr>
+            <td>SMTP Wachtwoord</td>
+            <td>{{ '***' if config.smtp_password else '(niet ingesteld)' }}</td>
+        </tr>
+        <tr>
+            <td>TLS</td>
+            <td>{{ 'Ja' if config.smtp_use_tls else 'Nee' }}</td>
+        </tr>
+        <tr>
+            <td>SSL</td>
+            <td>{{ 'Ja' if config.smtp_use_ssl else 'Nee' }}</td>
+        </tr>
+        <tr>
+            <td>Base URL</td>
+            <td>{{ config.base_url }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Hulp bij Configuratie - Populaire Providers</h3>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Gmail</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp.gmail.com</code></li>
+            <li>Poort: <code>587</code> (TLS) of <code>465</code> (SSL)</li>
+            <li>Je moet een <a href="https://myaccount.google.com/apppasswords" target="_blank">App Password</a> gebruiken</li>
+            <li>2-factor authenticatie moet ingeschakeld zijn</li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Outlook / Hotmail / Live.com</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp-mail.outlook.com</code></li>
+            <li>Poort: <code>587</code> (TLS)</li>
+            <li>Gebruik je normale wachtwoord (of App Password bij 2FA)</li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Yahoo Mail</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp.mail.yahoo.com</code></li>
+            <li>Poort: <code>587</code> (TLS) of <code>465</code> (SSL)</li>
+            <li>App Password vereist: <a href="https://login.yahoo.com/account/security" target="_blank">Yahoo Account Security</a></li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 iCloud Mail</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp.mail.me.com</code></li>
+            <li>Poort: <code>587</code> (TLS)</li>
+            <li>App-specifiek wachtwoord vereist: <a href="https://appleid.apple.com/" target="_blank">Apple ID</a></li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Microsoft 365 / Office 365 (Bedrijfs Email)</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp.office365.com</code></li>
+            <li>Poort: <code>587</code> (TLS)</li>
+            <li>Gebruik je bedrijfs email en wachtwoord</li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Zoho Mail</h4>
+        <ul>
+            <li>SMTP Server: <code>smtp.zoho.com</code></li>
+            <li>Poort: <code>587</code> (TLS)</li>
+            <li>Gebruik je Zoho email en wachtwoord</li>
+        </ul>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <h4>📧 Custom Bedrijfs Email</h4>
+        <ul>
+            <li>Vraag je IT afdeling om de SMTP instellingen</li>
+            <li>Meestal: <code>mail.jouwbedrijf.com</code> of <code>smtp.jouwbedrijf.com</code></li>
+            <li>Poort: meestal <code>587</code> (TLS) of <code>465</code> (SSL)</li>
+        </ul>
+    </div>
+    
+    <div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; margin-top: 20px;">
+        <p><strong>💡 Tip:</strong> Bekijk <code>EMAIL_PROVIDERS.md</code> voor een complete lijst met alle providers en gedetailleerde instructies!</p>
+        <p><strong>⚠️ Let op:</strong> Voor permanente wijzigingen moet je de <code>.env</code> file aanpassen en de applicatie herstarten.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function testEmail() {
+    const email = prompt('Voer je email adres in om een test email te ontvangen:');
+    if (!email) return;
+    
+    fetch('{{ url_for("test_email") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ ' + data.message);
+        } else {
+            alert('✗ Fout: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('✗ Fout: ' + error);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Nieuwe Campaign - Phishing Email Simulator{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Nieuwe Phishing Campaign</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Campaign Naam:</label>
+            <input type="text" id="name" name="name" required placeholder="Bijv: Q1 Security Test">
+        </div>
+        
+        <div class="form-group">
+            <label for="subject">Email Onderwerp:</label>
+            <input type="text" id="subject" name="subject" required placeholder="Bijv: Wachtwoord Reset Verzoek">
+        </div>
+        
+        <div class="form-group">
+            <label for="sender_name">Afzender Naam:</label>
+            <input type="text" id="sender_name" name="sender_name" required placeholder="Bijv: IT Support">
+        </div>
+        
+        <div class="form-group">
+            <label for="sender_email">Afzender Email:</label>
+            <input type="email" id="sender_email" name="sender_email" required placeholder="support@bedrijf.nl">
+        </div>
+        
+        <div class="form-group">
+            <label for="template_type">Email Template:</label>
+            <select id="template_type" name="template_type" required>
+                <option value="password_reset">Wachtwoord Reset</option>
+                <option value="urgent">Dringende Actie</option>
+                <option value="invoice">Factuur</option>
+                <option value="security_alert">Beveiligingswaarschuwing</option>
+                <option value="generic">Generiek</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="target_url">Doel URL (optioneel):</label>
+            <input type="text" id="target_url" name="target_url" placeholder="https://example.com/landing">
+            <small>Als leeg gelaten, wordt een standaard landing page getoond</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="recipients">Ontvangers (één per regel):</label>
+            <textarea id="recipients" name="recipients" required placeholder="gebruiker1@bedrijf.nl&#10;gebruiker2@bedrijf.nl&#10;gebruiker3@bedrijf.nl"></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Campaign Aanmaken</button>
+        <a href="{{ url_for('index') }}" class="btn">Annuleren</a>
+    </form>
+</div>
+{% endblock %}

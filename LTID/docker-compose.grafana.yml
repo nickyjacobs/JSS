@@ -1,0 +1,35 @@
+# Grafana + Prometheus stack for Threat Dashboard
+# Usage:
+#   1. Start the threat dashboard: python dashboard.py
+#   2. Run: docker-compose -f docker-compose.grafana.yml up -d
+#   3. Open Grafana at http://localhost:3000 (admin/admin)
+#   4. Add Prometheus datasource: http://prometheus:9090
+#   5. Import dashboard or create panels with:
+#      - threat_dashboard_total_threats
+#      - threat_dashboard_source_count
+
+version: "3"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:

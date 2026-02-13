@@ -1,0 +1,5 @@
+{
+  "virustotal_api_key": "YOUR_VIRUSTOTAL_API_KEY",
+  "abuseipdb_api_key": "YOUR_ABUSEIPDB_API_KEY",
+  "ipinfo_api_key": "YOUR_IPINFO_API_KEY_OPTIONAL"
+}

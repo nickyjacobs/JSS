@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}{{ campaign.name }} - Phishing Email Simulator{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ campaign.name }}</h2>
+    <p><strong>Onderwerp:</strong> {{ campaign.subject }}</p>
+    <p><strong>Template:</strong> {{ campaign.template_type }}</p>
+    <p><strong>Gemaakt op:</strong> {{ campaign.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+    
+    {% if config.configured %}
+    <button onclick="sendCampaign()" class="btn btn-success" style="margin-top: 20px;">Emails Versturen</button>
+    {% else %}
+    <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-top: 20px;">
+        ⚠️ Email configuratie niet compleet. <a href="{{ url_for('settings') }}">Configureer email instellingen</a> om emails te kunnen verzenden.
+    </div>
+    {% endif %}
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <h3>{{ stats.total_recipients }}</h3>
+        <p>Ontvangers</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.total_clicks }}</h3>
+        <p>Totaal Clicks</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.unique_clicks }}</h3>
+        <p>Unieke Clicks</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ "%.1f"|format(stats.click_rate) }}%</h3>
+        <p>Click Rate</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Ontvangers</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Naam</th>
+                <th>Verzonden op</th>
+                <th>Clicks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recipient in recipients %}
+            <tr>
+                <td>{{ recipient.email }}</td>
+                <td>{{ recipient.name }}</td>
+                <td>{{ recipient.sent_at.strftime('%d-%m-%Y %H:%M') if recipient.sent_at else 'Nog niet verzonden' }}</td>
+                <td>{{ recipient.clicks|length }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Click Geschiedenis</h3>
+    {% if clicks %}
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Geklikt op</th>
+                <th>IP Adres</th>
+                <th>User Agent</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for click in clicks %}
+            <tr>
+                <td>{{ click.recipient.email }}</td>
+                <td>{{ click.clicked_at.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                <td>{{ click.ip_address }}</td>
+                <td>{{ click.user_agent[:50] }}...</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Nog geen clicks geregistreerd.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendCampaign() {
+    if (!confirm('Weet je zeker dat je de emails wilt versturen?')) {
+        return;
+    }
+    
+    fetch('{{ url_for("send_campaign", campaign_id=campaign.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            alert('✗ Fout: ' + data.error);
+        } else {
+            let message = `✓ Emails verzonden: ${data.sent} van ${data.total}`;
+            if (data.warning) {
+                message += '\n⚠️ ' + data.warning;
+            }
+            alert(message);
+            location.reload();
+        }
+    })
+    .catch(error => {
+        alert('✗ Fout bij verzenden: ' + (error.error || error.message || error));
+    });
+}
+
+// Auto-refresh stats elke 30 seconden
+setInterval(function() {
+    fetch('{{ url_for("api_stats", campaign_id=campaign.id) }}')
+        .then(response => response.json())
+        .then(data => {
+            // Update stats cards (simplified - in production you'd update the DOM properly)
+            console.log('Stats updated:', data);
+        });
+}, 30000);
+</script>
+{% endblock %}

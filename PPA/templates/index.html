@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Policy Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --card-bg-hover: rgba(30, 41, 59, 0.95);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.2);
+            --border-hover: rgba(148, 163, 184, 0.4);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--text-primary);
+            font-weight: 400;
+            line-height: 1.6;
+            margin: 0;
+            position: static;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            transform: none;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 48px;
+            padding: 40px 0;
+        }
+
+        .header-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            color: var(--primary-color);
+            filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4));
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            font-weight: 400;
+            opacity: 0.9;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 2.25rem;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+            background: var(--card-bg-hover);
+            border-color: var(--border-hover);
+        }
+
+        .card h2 {
+            color: var(--text-primary);
+            margin-bottom: 32px;
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            position: relative;
+            padding-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-primary);
+        }
+
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .form-group input[type="number"]::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .checkbox-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .checkbox-group:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .checkbox-group input[type="checkbox"]:checked {
+            background: var(--primary-gradient);
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-group input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .checkbox-group input[type="checkbox"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            margin-left: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.01em;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);
+        }
+
+        .results {
+            margin-top: 0;
+        }
+
+        .score-card {
+            text-align: center;
+            padding: 48px 32px;
+            border-radius: 20px;
+            margin-bottom: 32px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(124, 58, 237, 0.5));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .score-grade {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .score-message {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 640px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-box {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .stat-box .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .findings {
+            margin-top: 32px;
+        }
+
+        .findings h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .finding {
+            padding: 24px;
+            margin-bottom: 20px;
+            border-radius: 16px;
+            border-left: 4px solid;
+            background: rgba(15, 23, 42, 0.6);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease;
+            animation-fill-mode: both;
+            border: 1px solid var(--border-color);
+        }
+
+        .finding:nth-child(1) { animation-delay: 0.1s; }
+        .finding:nth-child(2) { animation-delay: 0.2s; }
+        .finding:nth-child(3) { animation-delay: 0.3s; }
+        .finding:nth-child(4) { animation-delay: 0.4s; }
+
+        .finding:hover {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .finding.critical {
+            border-left-color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .finding.high {
+            border-left-color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .finding.medium {
+            border-left-color: var(--info-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .finding.low {
+            border-left-color: #94a3b8;
+            background: rgba(148, 163, 184, 0.1);
+        }
+
+        .finding.info {
+            border-left-color: var(--info-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .finding-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .finding-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .finding-description {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .finding-recommendation {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 18px;
+            border-radius: 12px;
+            margin-top: 16px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .finding-recommendation strong {
+            color: var(--primary-color);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .finding-statistics {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-left: 3px solid rgba(99, 102, 241, 0.5);
+            display: flex;
+            align-items: start;
+            gap: 10px;
+        }
+
+        .finding-statistics svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--info-color);
+        }
+
+        .finding-standard {
+            margin-top: 12px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .finding-standard svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .standard-label {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .standard-links {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .finding-standard a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid transparent;
+            display: inline-block;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .finding-standard a:hover {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            opacity: 0.8;
+        }
+
+        .finding-standard .link-separator {
+            color: var(--text-muted);
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(99, 102, 241, 0.2);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+            color: var(--text-muted);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .fixed-controls {
+            position: fixed !important;
+            top: 24px !important;
+            right: 24px !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            align-items: center;
+            gap: 16px;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .language-switch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(10px);
+        }
+
+        .export-button {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .export-button:hover:not(:disabled) {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .export-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        .export-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .language-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .language-switch button.active {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .language-switch button:hover:not(.active) {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg class="header-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <h1 data-i18n="title">Password Policy Analyzer</h1>
+            <p data-i18n="subtitle">Evalueer je wachtwoordbeleid tegen industry standards en krijg concrete verbeteringsvoorstellen</p>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span data-i18n="policy-title">Je Password Policy</span>
+                </h2>
+                <form id="policyForm">
+                    <div class="form-group">
+                        <label data-i18n="min-length">Minimale wachtwoordlengte</label>
+                        <input type="number" id="min_length" name="min_length" value="8" min="1" max="64">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="max-length">Maximale wachtwoordlengte (optioneel)</label>
+                        <input type="number" id="max_length" name="max_length" min="1" max="256" data-placeholder-i18n="no-limit">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="complexity">Complexity Vereisten</label>
+                        <div class="checkbox-container">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="require_uppercase" name="require_uppercase" checked>
+                                <label for="require_uppercase" data-i18n="require-uppercase">Hoofdletters vereist</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="require_lowercase" name="require_lowercase" checked>
+                                <label for="require_lowercase" data-i18n="require-lowercase">Kleine letters vereist</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="require_numbers" name="require_numbers" checked>
+                                <label for="require_numbers" data-i18n="require-numbers">Cijfers vereist</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="require_special_chars" name="require_special_chars" checked>
+                                <label for="require_special_chars" data-i18n="require-special">Speciale tekens vereist</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="max-age">Wachtwoord Verlopen (dagen, optioneel)</label>
+                        <input type="number" id="max_age_days" name="max_age_days" min="1" data-placeholder-i18n="no-expiry">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="min-age">Minimale leeftijd wachtwoord (dagen)</label>
+                        <input type="number" id="min_age_days" name="min_age_days" value="0" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="password-history">Wachtwoordgeschiedenis (aantal)</label>
+                        <input type="number" id="password_history" name="password_history" value="0" min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="account-lockout">Account Lockout</label>
+                        <input type="number" id="lockout_attempts" name="lockout_attempts" min="1" data-placeholder-i18n="attempts" style="margin-bottom: 12px;">
+                        <input type="number" id="lockout_duration_minutes" name="lockout_duration_minutes" min="1" data-placeholder-i18n="lockout-duration">
+                    </div>
+
+                    <div class="form-group">
+                        <label data-i18n="security-controls">Beveiligingscontroles</label>
+                        <div class="checkbox-container">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="prevent_common_passwords" name="prevent_common_passwords">
+                                <label for="prevent_common_passwords" data-i18n="prevent-common">Voorkom veelvoorkomende wachtwoorden</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="prevent_user_info" name="prevent_user_info">
+                                <label for="prevent_user_info" data-i18n="prevent-user-info">Voorkom gebruikersinformatie in wachtwoord</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="prevent_repeating_chars" name="prevent_repeating_chars">
+                                <label for="prevent_repeating_chars" data-i18n="prevent-repeating">Voorkom herhalende karakters</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="prevent_sequential_chars" name="prevent_sequential_chars">
+                                <label for="prevent_sequential_chars" data-i18n="prevent-sequential">Voorkom sequentiële karakters</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" data-i18n="analyze-btn">Analyseer Policy</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span data-i18n="results-title">Resultaten</span>
+                </h2>
+                <div id="results">
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p data-i18n="empty-state">Vul je password policy in en klik op "Analyseer Policy" om te beginnen.</p>
+                    </div>
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 16px; color: var(--text-secondary); font-weight: 500;" data-i18n="analyzing">Analyseren...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Language translations
+        const translations = {
+            nl: {
+                'title': 'Password Policy Analyzer',
+                'subtitle': 'Evalueer je wachtwoordbeleid tegen industry standards en krijg concrete verbeteringsvoorstellen',
+                'policy-title': 'Je Password Policy',
+                'results-title': 'Resultaten',
+                'min-length': 'Minimale wachtwoordlengte',
+                'max-length': 'Maximale wachtwoordlengte (optioneel)',
+                'complexity': 'Complexity Vereisten',
+                'require-uppercase': 'Hoofdletters vereist',
+                'require-lowercase': 'Kleine letters vereist',
+                'require-numbers': 'Cijfers vereist',
+                'require-special': 'Speciale tekens vereist',
+                'max-age': 'Wachtwoord Verlopen (dagen, optioneel)',
+                'min-age': 'Minimale leeftijd wachtwoord (dagen)',
+                'password-history': 'Wachtwoordgeschiedenis (aantal)',
+                'account-lockout': 'Account Lockout',
+                'security-controls': 'Beveiligingscontroles',
+                'prevent-common': 'Voorkom veelvoorkomende wachtwoorden',
+                'prevent-user-info': 'Voorkom gebruikersinformatie in wachtwoord',
+                'prevent-repeating': 'Voorkom herhalende karakters',
+                'prevent-sequential': 'Voorkom sequentiële karakters',
+                'analyze-btn': 'Analyseer Policy',
+                'empty-state': 'Vul je password policy in en klik op "Analyseer Policy" om te beginnen.',
+                'analyzing': 'Analyseren...',
+                'no-limit': 'Geen limiet',
+                'no-expiry': 'Geen verlopen',
+                'attempts': 'Aantal pogingen',
+                'lockout-duration': 'Lockout duur (minuten)',
+                'total-findings': 'Totaal Bevindingen',
+                'critical': 'Kritiek',
+                'high': 'Hoog',
+                'medium': 'Medium',
+                'low': 'Laag',
+                'findings-title': 'Bevindingen & Aanbevelingen',
+                'recommendation': 'Aanbeveling',
+                'standard': 'Standaard',
+                'no-problems': 'Geen problemen gevonden!',
+                'no-problems-desc': 'Je password policy voldoet aan alle industry standards.',
+                'error': 'Fout',
+                'error-desc': 'Fout bij het analyseren',
+                'export-btn': 'Export Rapport'
+            },
+            en: {
+                'title': 'Password Policy Analyzer',
+                'subtitle': 'Evaluate your password policy against industry standards and get concrete improvement suggestions',
+                'policy-title': 'Your Password Policy',
+                'results-title': 'Results',
+                'min-length': 'Minimum password length',
+                'max-length': 'Maximum password length (optional)',
+                'complexity': 'Complexity Requirements',
+                'require-uppercase': 'Uppercase required',
+                'require-lowercase': 'Lowercase required',
+                'require-numbers': 'Numbers required',
+                'require-special': 'Special characters required',
+                'max-age': 'Password Expiry (days, optional)',
+                'min-age': 'Minimum password age (days)',
+                'password-history': 'Password history (count)',
+                'account-lockout': 'Account Lockout',
+                'security-controls': 'Security Controls',
+                'prevent-common': 'Prevent common passwords',
+                'prevent-user-info': 'Prevent user information in password',
+                'prevent-repeating': 'Prevent repeating characters',
+                'prevent-sequential': 'Prevent sequential characters',
+                'analyze-btn': 'Analyze Policy',
+                'empty-state': 'Fill in your password policy and click "Analyze Policy" to get started.',
+                'analyzing': 'Analyzing...',
+                'no-limit': 'No limit',
+                'no-expiry': 'No expiry',
+                'attempts': 'Number of attempts',
+                'lockout-duration': 'Lockout duration (minutes)',
+                'total-findings': 'Total Findings',
+                'critical': 'Critical',
+                'high': 'High',
+                'medium': 'Medium',
+                'low': 'Low',
+                'findings-title': 'Findings & Recommendations',
+                'recommendation': 'Recommendation',
+                'standard': 'Standard',
+                'no-problems': 'No problems found!',
+                'no-problems-desc': 'Your password policy meets all industry standards.',
+                'error': 'Error',
+                'error-desc': 'Error analyzing',
+                'export-btn': 'Export Report'
+            }
+        };
+
+        let currentLang = localStorage.getItem('language') || 'nl';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            
+            // Update active button
+            document.getElementById('lang-nl').classList.toggle('active', lang === 'nl');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            
+            // Update all text elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    if (el.tagName === 'SPAN' && el.parentElement.classList.contains('standard-links')) {
+                        // Don't update standard links content
+                        return;
+                    }
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update placeholders
+            document.querySelectorAll('[data-placeholder-i18n]').forEach(el => {
+                const key = el.getAttribute('data-placeholder-i18n');
+                if (translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+            
+            // Re-fetch results with new language if they exist
+            if (currentAnalysisData && currentAnalysisData.success && currentAnalysisData.policy) {
+                // Re-analyze with new language
+                const loading = document.getElementById('loading');
+                const results = document.getElementById('results');
+                
+                if (loading) loading.classList.add('active');
+                if (results) results.innerHTML = '';
+                
+                fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...currentAnalysisData.policy,
+                        lang: lang
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentAnalysisData = data;
+                        displayResults(data);
+                        // Show export button
+                        setTimeout(() => {
+                            const exportBtn = document.getElementById('exportBtn');
+                            if (exportBtn) {
+                                exportBtn.disabled = false;
+                                exportBtn.style.display = 'flex';
+                                exportBtn.style.opacity = '1';
+                                exportBtn.style.pointerEvents = 'auto';
+                                exportBtn.style.transition = 'opacity 0.3s ease';
+                            }
+                        }, 300);
+                    }
+                    if (loading) loading.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error re-analyzing:', error);
+                    if (loading) loading.classList.remove('active');
+                });
+            }
+        }
+
+        // Store current analysis data for export
+        let currentAnalysisData = null;
+
+        // Create fixed controls container
+        function createFixedControls() {
+            // Remove old controls if they exist
+            const oldControls = document.querySelector('.fixed-controls');
+            if (oldControls) {
+                oldControls.remove();
+            }
+            
+            // Create new container
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'fixed-controls';
+            
+            // Create language switch
+            const langSwitch = document.createElement('div');
+            langSwitch.className = 'language-switch';
+            
+            const langNl = document.createElement('button');
+            langNl.id = 'lang-nl';
+            langNl.className = 'active';
+            langNl.textContent = 'NL';
+            
+            const langEn = document.createElement('button');
+            langEn.id = 'lang-en';
+            langEn.textContent = 'EN';
+            
+            langSwitch.appendChild(langNl);
+            langSwitch.appendChild(langEn);
+            
+            // Create export button (hidden by default, will be shown after results)
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'export-button';
+            exportBtn.id = 'exportBtn';
+            exportBtn.disabled = true;
+            exportBtn.style.display = 'none';
+            exportBtn.style.opacity = '0';
+            exportBtn.style.pointerEvents = 'none';
+            
+            const exportIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            exportIcon.setAttribute('fill', 'none');
+            exportIcon.setAttribute('stroke', 'currentColor');
+            exportIcon.setAttribute('viewBox', '0 0 24 24');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z');
+            exportIcon.appendChild(path);
+            
+            const exportText = document.createElement('span');
+            exportText.setAttribute('data-i18n', 'export-btn');
+            exportText.textContent = 'Export Rapport';
+            
+            exportBtn.appendChild(exportIcon);
+            exportBtn.appendChild(exportText);
+            
+            // Add to container
+            controlsContainer.appendChild(exportBtn);
+            controlsContainer.appendChild(langSwitch);
+            
+            // Add directly to html element (highest level)
+            document.documentElement.appendChild(controlsContainer);
+            
+            // Force fixed positioning with inline styles
+            controlsContainer.style.cssText = `
+                position: fixed !important;
+                top: 24px !important;
+                right: 24px !important;
+                z-index: 999999 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 16px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            `;
+            
+            // Setup event listeners
+            langNl.addEventListener('click', () => setLanguage('nl'));
+            langEn.addEventListener('click', () => setLanguage('en'));
+            
+            exportBtn.addEventListener('click', function() {
+                if (currentAnalysisData) {
+                    exportReport(currentAnalysisData);
+                }
+            });
+        }
+
+        // Setup form handler - make sure it's only set up once
+        let formHandlerSetup = false;
+        function setupFormHandler() {
+            if (formHandlerSetup) return;
+            
+            const form = document.getElementById('policyForm');
+            if (!form) {
+                setTimeout(setupFormHandler, 100);
+                return;
+            }
+            
+            formHandlerSetup = true;
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const loading = document.getElementById('loading');
+                const results = document.getElementById('results');
+                
+                loading.classList.add('active');
+                results.innerHTML = '';
+                
+                // Collect form data
+                const formData = {
+                    min_length: parseInt(document.getElementById('min_length').value) || 8,
+                    max_length: document.getElementById('max_length').value ? parseInt(document.getElementById('max_length').value) : null,
+                    require_uppercase: document.getElementById('require_uppercase').checked,
+                    require_lowercase: document.getElementById('require_lowercase').checked,
+                    require_numbers: document.getElementById('require_numbers').checked,
+                    require_special_chars: document.getElementById('require_special_chars').checked,
+                    max_age_days: document.getElementById('max_age_days').value ? parseInt(document.getElementById('max_age_days').value) : null,
+                    min_age_days: parseInt(document.getElementById('min_age_days').value) || 0,
+                    password_history: parseInt(document.getElementById('password_history').value) || 0,
+                    lockout_attempts: document.getElementById('lockout_attempts').value ? parseInt(document.getElementById('lockout_attempts').value) : null,
+                    lockout_duration_minutes: document.getElementById('lockout_duration_minutes').value ? parseInt(document.getElementById('lockout_duration_minutes').value) : null,
+                    prevent_common_passwords: document.getElementById('prevent_common_passwords').checked,
+                    prevent_user_info: document.getElementById('prevent_user_info').checked,
+                    prevent_repeating_chars: document.getElementById('prevent_repeating_chars').checked,
+                    prevent_sequential_chars: document.getElementById('prevent_sequential_chars').checked
+                };
+                
+                try {
+                    const response = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ...formData,
+                            lang: currentLang
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                if (data.success) {
+                    currentAnalysisData = data;
+                    displayResults(data);
+                    // Show export button only after results are displayed
+                    setTimeout(() => {
+                        const exportBtn = document.getElementById('exportBtn');
+                        if (exportBtn) {
+                            exportBtn.disabled = false;
+                            exportBtn.style.display = 'flex';
+                            exportBtn.style.opacity = '1';
+                            exportBtn.style.pointerEvents = 'auto';
+                            exportBtn.style.transition = 'opacity 0.3s ease';
+                        }
+                    }, 300);
+                    } else {
+                        currentAnalysisData = null;
+                        const exportBtn = document.getElementById('exportBtn');
+                        if (exportBtn) {
+                            exportBtn.disabled = true;
+                            exportBtn.style.display = 'none';
+                            exportBtn.style.opacity = '0';
+                            exportBtn.style.pointerEvents = 'none';
+                        }
+                        const errorText = currentLang === 'nl' ? 'Fout' : 'Error';
+                        const errorDesc = currentLang === 'nl' ? data.error : data.error;
+                        results.innerHTML = `<div class="finding critical"><div class="finding-title"><svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${errorText}</div><div class="finding-description">${errorDesc}</div></div>`;
+                    }
+                } catch (error) {
+                    currentAnalysisData = null;
+                    const exportBtn = document.getElementById('exportBtn');
+                    if (exportBtn) {
+                        exportBtn.disabled = true;
+                        exportBtn.style.display = 'none';
+                        exportBtn.style.opacity = '0';
+                        exportBtn.style.pointerEvents = 'none';
+                    }
+                    const errorText = currentLang === 'nl' ? 'Fout' : 'Error';
+                    const errorDesc = currentLang === 'nl' ? `Fout bij het analyseren: ${error.message}` : `Error analyzing: ${error.message}`;
+                    results.innerHTML = `<div class="finding critical"><div class="finding-title"><svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${errorText}</div><div class="finding-description">${errorDesc}</div></div>`;
+                } finally {
+                    loading.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize app
+        function initializeApp() {
+            // Create controls first
+            createFixedControls();
+            
+            // Then setup language
+            setLanguage(currentLang);
+            
+            // Then setup form handler
+            setTimeout(() => {
+                setupFormHandler();
+            }, 100);
+        }
+
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        
+        // Also try to setup form handler immediately if form already exists
+        setTimeout(() => {
+            if (document.getElementById('policyForm') && !formHandlerSetup) {
+                setupFormHandler();
+            }
+        }, 200);
+        
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const score = data.score;
+            const findings = data.findings;
+            
+            let html = `
+                <div class="score-card">
+                    <div class="score-circle" style="background: ${getScoreGradient(score.score)};">
+                        ${findings.length}
+                    </div>
+                    <div class="score-grade" style="color: ${getScoreColor(score.score)};">
+                        Grade: ${score.grade}
+                    </div>
+                    <div class="score-message">${score.message}</div>
+                    <div class="stats-summary">
+                        <div class="stat-box">
+                            <div class="number" style="background: linear-gradient(135deg, #ef4444, #dc2626); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${score.critical_count || 0}</div>
+                            <div class="label">${translations[currentLang]['critical']}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" style="background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${score.high_count || 0}</div>
+                            <div class="label">${translations[currentLang]['high']}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" style="background: linear-gradient(135deg, #3b82f6, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${score.medium_count || 0}</div>
+                            <div class="label">${translations[currentLang]['medium']}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" style="background: linear-gradient(135deg, #94a3b8, #64748b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${score.low_count || 0}</div>
+                            <div class="label">${translations[currentLang]['low']}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (findings.length > 0) {
+                html += `<div class="findings"><h3><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>${translations[currentLang]['findings-title']}</h3>`;
+                
+                findings.forEach((finding, index) => {
+                    html += `
+                        <div class="finding ${finding.severity}" style="animation-delay: ${index * 0.1}s">
+                            <div class="finding-title">${getSeverityIcon(finding.severity)} ${finding.title}</div>
+                            <div class="finding-description">${finding.description}</div>
+                            ${finding.breach_statistics ? `<div class="finding-statistics"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>${finding.breach_statistics}</div>` : ''}
+                            <div class="finding-recommendation">
+                                <strong><svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>${translations[currentLang]['recommendation']}</strong>
+                                ${finding.recommendation}
+                            </div>
+                            <div class="finding-standard">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                                <span class="standard-label">${translations[currentLang]['standard']}:</span>
+                                <span class="standard-links">${formatStandardLinks(finding.standard)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            } else {
+                html += `<div class="finding info">
+                    <div class="finding-title">
+                        <svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        ${translations[currentLang]['no-problems']}
+                    </div>
+                    <div class="finding-description">${translations[currentLang]['no-problems-desc']}</div>
+                </div>`;
+            }
+            
+            results.innerHTML = html;
+            
+            // Scroll to results with smooth animation
+            setTimeout(() => {
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        
+        function getScoreColor(score) {
+            if (score >= 90) return '#10b981';
+            if (score >= 75) return '#3b82f6';
+            if (score >= 60) return '#f59e0b';
+            if (score >= 40) return '#f97316';
+            return '#ef4444';
+        }
+        
+        function getScoreGradient(score) {
+            if (score >= 90) return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            if (score >= 75) return 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            if (score >= 60) return 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            if (score >= 40) return 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+            return 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        }
+        
+        function getSeverityIcon(severity) {
+            const icons = {
+                'critical': '<svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--danger-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                'high': '<svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--warning-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                'medium': '<svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--info-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                'low': '<svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #94a3b8;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                'info': '<svg class="finding-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--info-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+            return icons[severity] || icons['info'];
+        }
+
+        function exportReport(data) {
+            const score = data.score;
+            const findings = data.findings;
+            const policy = data.policy;
+            const date = new Date().toLocaleDateString(currentLang === 'nl' ? 'nl-NL' : 'en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const time = new Date().toLocaleTimeString(currentLang === 'nl' ? 'nl-NL' : 'en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Get score color
+            const scoreColor = getScoreColor(score.score);
+            const scoreGradient = getScoreGradient(score.score);
+
+            // Create report HTML with modern design
+            let reportHTML = `
+<!DOCTYPE html>
+<html lang="${currentLang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Policy Analysis Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%);
+            color: #f1f5f9;
+            padding: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        .report-wrapper {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%);
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+        .report-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+        }
+        .report-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 60px 50px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .report-header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .report-header svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+        }
+        .report-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .report-header .date {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        .report-content {
+            padding: 50px;
+        }
+        .score-section {
+            text-align: center;
+            padding: 50px 40px;
+            background: ${scoreGradient};
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 50px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .score-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        }
+        .score-content {
+            position: relative;
+            z-index: 1;
+        }
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: 800;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 4px solid rgba(255,255,255,0.3);
+        }
+        .score-grade {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .score-message {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            font-weight: 500;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: transform 0.3s ease;
+        }
+        .stat-box:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.25);
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.95;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px solid #6366f1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title svg {
+            width: 28px;
+            height: 28px;
+            color: #6366f1;
+        }
+        .policy-summary {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .policy-summary h3 {
+            margin-bottom: 20px;
+            color: #f1f5f9;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .policy-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .policy-item:last-child {
+            border-bottom: none;
+        }
+        .policy-label {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+        .policy-value {
+            color: #f1f5f9;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.2);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .finding {
+            padding: 28px;
+            margin-bottom: 24px;
+            border-radius: 16px;
+            border-left: 5px solid;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .finding:hover {
+            transform: translateX(4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .finding.critical {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .finding.high {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.15);
+        }
+        .finding.medium {
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .finding.low {
+            border-left-color: #94a3b8;
+            background: rgba(148, 163, 184, 0.15);
+        }
+        .finding-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .finding-title svg {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .finding-description {
+            color: #cbd5e1;
+            margin-bottom: 16px;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+        .finding-recommendation {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 18px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .finding-recommendation strong {
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .finding-recommendation strong svg {
+            width: 20px;
+            height: 20px;
+        }
+        .finding-statistics {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 12px;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            border-left: 3px solid rgba(99, 102, 241, 0.5);
+            display: flex;
+            align-items: start;
+            gap: 10px;
+        }
+        .finding-statistics svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: #3b82f6;
+        }
+        .finding-standard {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 0.875rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .finding-standard svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .finding-standard a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .finding-standard a:hover {
+            color: #818cf8;
+            text-decoration: underline;
+        }
+        .footer {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 30px 50px;
+            text-align: center;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .report-wrapper {
+                background: white;
+                padding: 0;
+            }
+            .report-container {
+                box-shadow: none;
+                border: none;
+            }
+            .report-header {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .score-section {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-wrapper">
+        <div class="report-container">
+            <div class="report-header">
+                <div class="report-header-content">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <h1>Password Policy Analysis Report</h1>
+                    <div class="date">${date} • ${time}</div>
+                </div>
+            </div>
+
+            <div class="report-content">
+                <div class="score-section">
+                    <div class="score-content">
+                        <div class="score-circle">${findings.length}</div>
+                        <div class="score-grade">Grade: ${score.grade}</div>
+                        <div class="score-message">${score.message}</div>
+                        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="stat-box">
+                                <div class="stat-number">${score.critical_count || 0}</div>
+                                <div class="stat-label">${translations[currentLang]['critical']}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">${score.high_count || 0}</div>
+                                <div class="stat-label">${translations[currentLang]['high']}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">${score.medium_count || 0}</div>
+                                <div class="stat-label">${translations[currentLang]['medium']}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number">${score.low_count || 0}</div>
+                                <div class="stat-label">${translations[currentLang]['low']}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        ${translations[currentLang]['policy-title']}
+                    </h2>
+                    <div class="policy-summary">
+                        <h3>Policy Configuration</h3>
+                        <div class="policy-grid">
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['min-length']}</span>
+                                <span class="policy-value">${policy.min_length}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['max-length']}</span>
+                                <span class="policy-value">${policy.max_length || translations[currentLang]['no-limit']}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['require-uppercase']}</span>
+                                <span class="policy-value">${policy.require_uppercase ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['require-lowercase']}</span>
+                                <span class="policy-value">${policy.require_lowercase ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['require-numbers']}</span>
+                                <span class="policy-value">${policy.require_numbers ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['require-special']}</span>
+                                <span class="policy-value">${policy.require_special_chars ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['max-age']}</span>
+                                <span class="policy-value">${policy.max_age_days || translations[currentLang]['no-expiry']}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['min-age']}</span>
+                                <span class="policy-value">${policy.min_age_days || 0}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['password-history']}</span>
+                                <span class="policy-value">${policy.password_history}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['account-lockout']} - ${translations[currentLang]['attempts']}</span>
+                                <span class="policy-value">${policy.lockout_attempts || translations[currentLang]['no-limit']}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['account-lockout']} - ${translations[currentLang]['lockout-duration']}</span>
+                                <span class="policy-value">${policy.lockout_duration_minutes || translations[currentLang]['no-limit']}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['prevent-common']}</span>
+                                <span class="policy-value">${policy.prevent_common_passwords ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['prevent-user-info']}</span>
+                                <span class="policy-value">${policy.prevent_user_info ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['prevent-repeating']}</span>
+                                <span class="policy-value">${policy.prevent_repeating_chars ? '✓' : '✗'}</span>
+                            </div>
+                            <div class="policy-item">
+                                <span class="policy-label">${translations[currentLang]['prevent-sequential']}</span>
+                                <span class="policy-value">${policy.prevent_sequential_chars ? '✓' : '✗'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                        ${translations[currentLang]['findings-title']}
+                    </h2>
+`;
+
+            if (findings.length > 0) {
+                // Sort findings by severity (same as displayResults)
+                const severityOrder = { 'critical': 0, 'high': 1, 'medium': 2, 'low': 3, 'info': 4 };
+                const sortedFindings = [...findings].sort((a, b) => {
+                    const severityDiff = (severityOrder[a.severity] || 99) - (severityOrder[b.severity] || 99);
+                    if (severityDiff !== 0) return severityDiff;
+                    return (b.impact_score || 0) - (a.impact_score || 0);
+                });
+                
+                sortedFindings.forEach(finding => {
+                    const severityIcon = getSeverityIconForExport(finding.severity);
+                    reportHTML += `
+                    <div class="finding ${finding.severity}">
+                        <div class="finding-title">
+                            ${severityIcon}
+                            ${finding.title}
+                        </div>
+                        <div class="finding-description">${finding.description}</div>
+                        ${finding.breach_statistics ? `
+                        <div class="finding-statistics">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            ${finding.breach_statistics}
+                        </div>` : ''}
+                        <div class="finding-recommendation">
+                            <strong>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                ${translations[currentLang]['recommendation']}
+                            </strong>
+                            ${finding.recommendation}
+                        </div>
+                        <div class="finding-standard">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            ${translations[currentLang]['standard']}: ${formatStandardLinksForExport(finding.standard)}
+                        </div>
+                    </div>
+`;
+                });
+            } else {
+                reportHTML += `
+                    <div class="finding medium">
+                        <div class="finding-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${translations[currentLang]['no-problems']}
+                        </div>
+                        <div class="finding-description">${translations[currentLang]['no-problems-desc']}</div>
+                    </div>
+`;
+            }
+
+            reportHTML += `
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Generated by Password Policy Analyzer • ${date}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+            
+            // Helper function for severity icons in export
+            function getSeverityIconForExport(severity) {
+                const icons = {
+                    'critical': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #ef4444;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                    'high': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #f59e0b;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                    'medium': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3b82f6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                    'low': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #94a3b8;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                    'info': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3b82f6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                };
+                return icons[severity] || icons['info'];
+            }
+
+            // Create blob and download
+            const blob = new Blob([reportHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `password-policy-report-${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function formatStandardLinksForExport(standardText) {
+            const standards = standardText.split(',').map(s => s.trim());
+            const displayTexts = {
+                'NIST 800-63B Section 5.1.1.2': 'NIST 800-63B',
+                'OWASP Authentication Cheat Sheet': 'OWASP Authentication Cheat Sheet'
+            };
+            
+            return standards.map(standard => {
+                let url = standardUrls[standard];
+                let displayText = displayTexts[standard] || standard;
+                
+                if (!url) {
+                    if (standard.includes('NIST 800-63B')) {
+                        url = standardUrls['NIST 800-63B Section 5.1.1.2'];
+                        if (standard.includes('Section')) {
+                            displayText = 'NIST 800-63B';
+                        }
+                    } else if (standard.includes('OWASP')) {
+                        url = standardUrls['OWASP Authentication Cheat Sheet'];
+                    }
+                }
+                
+                if (url) {
+                    return `<a href="${url}" target="_blank">${displayText}</a>`;
+                } else {
+                    return standard;
+                }
+            }).join(', ');
+        }
+
+        // Standard URLs mapping
+        const standardUrls = {
+            'NIST 800-63B': 'https://pages.nist.gov/800-63-3/sp800-63b.html',
+            'NIST 800-63B Section 5.1.1.2': 'https://pages.nist.gov/800-63-3/sp800-63b.html#sec5',
+            'OWASP Authentication Cheat Sheet': 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html',
+            'OWASP': 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html'
+        };
+
+        function formatStandardLinks(standardText) {
+            // Split by comma if multiple standards
+            const standards = standardText.split(',').map(s => s.trim());
+            
+            // Create display text mapping (shorter versions for long standards)
+            const displayTexts = {
+                'NIST 800-63B Section 5.1.1.2': 'NIST 800-63B',
+                'OWASP Authentication Cheat Sheet': 'OWASP Authentication Cheat Sheet',
+                'OWASP Authentication Cheat Sheet, NIST 800-63B': 'OWASP Authentication Cheat Sheet, NIST 800-63B'
+            };
+            
+            const links = standards.map((standard, index) => {
+                // Try to find exact match first
+                let url = standardUrls[standard];
+                
+                // Get display text (shorter version if available)
+                let displayText = displayTexts[standard] || standard;
+                
+                // If no exact match, try to find partial match
+                if (!url) {
+                    if (standard.includes('NIST 800-63B')) {
+                        url = standardUrls['NIST 800-63B Section 5.1.1.2'];
+                        // Use shorter display text for long NIST references
+                        if (standard.includes('Section')) {
+                            displayText = 'NIST 800-63B';
+                        }
+                    } else if (standard.includes('OWASP')) {
+                        url = standardUrls['OWASP Authentication Cheat Sheet'];
+                    }
+                }
+                
+                // If still no URL, return plain text
+                if (url) {
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" title="${standard}">${displayText}</a>`;
+                } else {
+                    return `<span>${standard}</span>`;
+                }
+            });
+            
+            // Join with separators that wrap nicely
+            return links.map((link, index) => {
+                if (index === 0) return link;
+                return `<span class="link-separator">•</span>${link}`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

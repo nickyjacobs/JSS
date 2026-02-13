@@ -1,0 +1,24 @@
+{
+  "description": "Voorbeeld password policy configuratie",
+  "policy": {
+    "min_length": 8,
+    "max_length": null,
+    "require_uppercase": true,
+    "require_lowercase": true,
+    "require_numbers": true,
+    "require_special_chars": true,
+    "max_age_days": 90,
+    "min_age_days": 0,
+    "password_history": 0,
+    "lockout_attempts": null,
+    "lockout_duration_minutes": null,
+    "prevent_common_passwords": false,
+    "prevent_user_info": false,
+    "prevent_repeating_chars": false,
+    "prevent_sequential_chars": false
+  },
+  "notes": [
+    "Dit is een voorbeeld van een zwakke policy met veel problemen",
+    "Gebruik dit als referentie voor het formulier in de web interface"
+  ]
+}

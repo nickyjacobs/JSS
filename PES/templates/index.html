@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns - Phishing Email Simulator{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Campaigns Overzicht</h2>
+    <a href="{{ url_for('new_campaign') }}" class="btn">+ Nieuwe Campaign</a>
+</div>
+
+{% if campaigns %}
+<table>
+    <thead>
+        <tr>
+            <th>Naam</th>
+            <th>Onderwerp</th>
+            <th>Template</th>
+            <th>Ontvangers</th>
+            <th>Gemaakt op</th>
+            <th>Acties</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for campaign in campaigns %}
+        <tr>
+            <td>{{ campaign.name }}</td>
+            <td>{{ campaign.subject }}</td>
+            <td>{{ campaign.template_type }}</td>
+            <td>{{ campaign.recipients|length }}</td>
+            <td>{{ campaign.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+            <td>
+                <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn">Bekijken</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card">
+    <p>Nog geen campaigns. <a href="{{ url_for('new_campaign') }}">Maak je eerste campaign aan</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

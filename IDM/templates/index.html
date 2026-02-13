@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intrusion Detection Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-color: #6366f1;
+            --primary-hover: #818cf8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --critical-color: #dc2626;
+            --info-color: #3b82f6;
+            --bg-dark: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.9);
+            --card-bg-hover: rgba(30, 41, 59, 0.95);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.2);
+            --border-hover: rgba(148, 163, 184, 0.4);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--text-primary);
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+        }
+
+        .logo {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.35em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .control-group input {
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .status-badge {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge.stopped {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 2px solid var(--danger-color);
+        }
+
+        .status-badge.monitoring {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 2px solid var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--primary-gradient);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            letter-spacing: 0.5px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .config-item label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .config-item input {
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .config-item input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .config-item input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .config-item input:focus:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .config-item label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-item label::before {
+            content: '⚙';
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .alerts-panel {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .alerts-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .alerts-panel::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 4px;
+        }
+
+        .alerts-panel::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .alert-item {
+            background: rgba(220, 38, 38, 0.15);
+            border-left: 5px solid var(--critical-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            animation: slideUp 0.4s ease-out;
+            box-shadow: var(--shadow-md);
+        }
+
+        .alert-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .alert-type {
+            font-weight: 800;
+            color: var(--critical-color);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .alert-time {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .alert-details {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .alert-details strong {
+            color: var(--text-primary);
+        }
+
+        .card-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .empty-alerts {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 48px 20px;
+            font-size: 1rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            min-width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .toast:hover {
+            transform: translateX(-4px);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+        }
+
+        .toast.success {
+            border-color: var(--success-color);
+            border-left: 5px solid var(--success-color);
+        }
+
+        .toast.error {
+            border-color: var(--danger-color);
+            border-left: 5px solid var(--danger-color);
+        }
+
+        .toast.warning {
+            border-color: var(--warning-color);
+            border-left: 5px solid var(--warning-color);
+        }
+
+        .toast.info {
+            border-color: var(--info-color);
+            border-left: 5px solid var(--info-color);
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success-color);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger-color);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning-color);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--info-color);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .toast-message {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toast-close:hover {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-primary);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        .toast.hiding {
+            animation: slideOutRight 0.3s ease-out forwards;
+        }
+
+        /* Improved input styling */
+        .config-item input:invalid {
+            border-color: var(--danger-color);
+        }
+
+        .config-item input:valid {
+            border-color: var(--success-color);
+        }
+
+        /* Loading state for buttons */
+        .btn.loading {
+            position: relative;
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Better card styling */
+        .card h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
+        }
+
+        /* Smooth transitions for status changes */
+        .status-badge {
+            transition: all 0.3s ease;
+        }
+
+        /* Better empty state */
+        .empty-alerts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .empty-alerts::before {
+            content: '🔒';
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo" aria-hidden="true">IDM</div>
+            <h1>Intrusion Detection Monitor</h1>
+            <p>Real-time log monitoring for failed login attempts and brute force detection</p>
+        </div>
+
+        <div class="card">
+            <h2>Control Panel</h2>
+            <div class="control-panel">
+                <div class="control-group">
+                    <span class="status-badge stopped" id="status">Stopped</span>
+                </div>
+                <div class="control-group">
+                    <button class="btn" id="startStopBtn" onclick="toggleMonitoring()">Start Monitoring</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Configuration</h2>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Log File Path</label>
+                    <input type="text" id="logPath" value="/var/log/auth.log" placeholder="/var/log/auth.log" disabled>
+                </div>
+                <div class="config-item">
+                    <label>Failed Login Threshold</label>
+                    <input type="number" id="failedThreshold" value="5" min="1" placeholder="5" disabled>
+                </div>
+                <div class="config-item">
+                    <label>Time Window (seconds)</label>
+                    <input type="number" id="timeWindow" value="300" min="1" placeholder="300" disabled>
+                </div>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 12px; align-items: center;">
+                <button class="btn" id="updateConfigBtn" onclick="updateConfig()" style="display: none;">💾 Update Configuration</button>
+                <span id="configStatus" style="color: var(--text-muted); font-size: 0.9rem; display: none;"></span>
+            </div>
+            <p class="card-desc">
+                <strong>Note:</strong> Reading /var/log/auth.log typically requires root privileges. 
+                Run with <code>sudo</code> if you encounter permission errors. Configuration can only be changed when monitoring is stopped.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Intrusion Alerts</h2>
+            <div class="alerts-panel" id="alertsContainer">
+                <div class="empty-alerts">No alerts yet. Start monitoring to detect failed login attempts.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        let isMonitoring = false;
+        let configLoaded = false; // Track if config has been loaded initially
+
+        // Toast Notification System
+        function showToast(type, title, message, duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✓',
+                error: '✗',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+            
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || 'ℹ'}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after duration
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function displayAlert(alert) {
+            const container = document.getElementById('alertsContainer');
+            if (container.querySelector('.empty-alerts')) {
+                container.innerHTML = '';
+            }
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-item';
+            alertDiv.innerHTML = `
+                <div class="alert-header">
+                    <span class="alert-type">${alert.event_type.toUpperCase()}</span>
+                    <span class="alert-time">${alert.timestamp}</span>
+                </div>
+                <div class="alert-details">
+                    <strong>Source IP:</strong> ${alert.ip}<br>
+                    <strong>Failed Attempts:</strong> ${alert.count} (Threshold: ${alert.threshold})<br>
+                    <strong>Rate:</strong> ${alert.rate.toFixed(2)} attempts/minute
+                </div>
+            `;
+            
+            container.insertBefore(alertDiv, container.firstChild);
+        }
+
+        function updateStatus(status) {
+            const statusEl = document.getElementById('status');
+            const btn = document.getElementById('startStopBtn');
+            const updateBtn = document.getElementById('updateConfigBtn');
+            const logPathInput = document.getElementById('logPath');
+            const thresholdInput = document.getElementById('failedThreshold');
+            const windowInput = document.getElementById('timeWindow');
+            
+            if (status === 'monitoring') {
+                statusEl.textContent = 'Monitoring';
+                statusEl.className = 'status-badge monitoring';
+                btn.textContent = 'Stop Monitoring';
+                btn.className = 'btn btn-stop';
+                isMonitoring = true;
+                // Disable config inputs during monitoring
+                logPathInput.disabled = true;
+                thresholdInput.disabled = true;
+                windowInput.disabled = true;
+                updateBtn.style.display = 'none';
+            } else {
+                statusEl.textContent = 'Stopped';
+                statusEl.className = 'status-badge stopped';
+                btn.textContent = 'Start Monitoring';
+                btn.className = 'btn';
+                isMonitoring = false;
+                // Enable config inputs when stopped
+                logPathInput.disabled = false;
+                thresholdInput.disabled = false;
+                windowInput.disabled = false;
+                updateBtn.style.display = 'inline-block';
+                document.getElementById('configStatus').style.display = 'none';
+            }
+        }
+
+        function updateConfig() {
+            const btn = document.getElementById('updateConfigBtn');
+            const originalText = btn.textContent;
+            btn.classList.add('loading');
+            btn.disabled = true;
+            
+            // Just update the config on server (without starting monitoring)
+            fetch('/api/update-config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    log_path: document.getElementById('logPath').value.trim(),
+                    failed_threshold: parseInt(document.getElementById('failedThreshold').value),
+                    time_window: parseInt(document.getElementById('timeWindow').value)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.textContent = originalText;
+                
+                if (data.error) {
+                    showToast('error', 'Configuration Error', data.error, 7000);
+                } else {
+                    // Update the configLoaded flag so we don't overwrite user changes
+                    configLoaded = true;
+                    const statusEl = document.getElementById('configStatus');
+                    statusEl.style.display = 'inline-block';
+                    statusEl.textContent = '✓ Saved';
+                    statusEl.style.color = 'var(--success-color)';
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+                    showToast('success', 'Configuration Updated', data.message || 'Configuration has been saved successfully.', 4000);
+                }
+            })
+            .catch(error => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btn.textContent = originalText;
+                showToast('error', 'Network Error', 'Failed to update configuration: ' + error.message, 6000);
+            });
+        }
+
+        function toggleMonitoring() {
+            const btn = document.getElementById('startStopBtn');
+            const originalText = btn.textContent;
+            btn.classList.add('loading');
+            btn.disabled = true;
+            
+            fetch('/api/toggle', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    log_path: document.getElementById('logPath').value.trim(),
+                    failed_threshold: parseInt(document.getElementById('failedThreshold').value),
+                    time_window: parseInt(document.getElementById('timeWindow').value)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                
+                if (data.error) {
+                    showToast('error', 'Monitoring Error', data.error, 7000);
+                } else {
+                    updateStatus(data.status);
+                    if (data.status === 'monitoring') {
+                        showToast('success', 'Monitoring Started', 'Now monitoring log file for intrusion attempts.', 4000);
+                    } else {
+                        showToast('info', 'Monitoring Stopped', 'Monitoring has been stopped.', 3000);
+                    }
+                }
+            })
+            .catch(error => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                showToast('error', 'Network Error', 'Failed to toggle monitoring: ' + error.message, 6000);
+            });
+        }
+
+        // Load configuration once on page load
+        function loadConfig() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        updateStatus(data.status);
+                    }
+                    // Only load config once on initial page load
+                    if (data.config && !configLoaded) {
+                        document.getElementById('logPath').value = data.config.log_path || '/var/log/auth.log';
+                        document.getElementById('failedThreshold').value = data.config.failed_threshold || 5;
+                        document.getElementById('timeWindow').value = data.config.time_window || 300;
+                        configLoaded = true;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Poll for updates (status and alerts only, not config)
+        function pollUpdates() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Only update status, not config (config is only loaded once)
+                    if (data.status) {
+                        updateStatus(data.status);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.alerts && data.alerts.length > 0) {
+                        data.alerts.forEach(alert => {
+                            displayAlert(alert);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Load config once on page load
+        loadConfig();
+        
+        // Poll every 500ms for status and alerts (but not config)
+        setInterval(pollUpdates, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+# Byte-compiled / optimized / DLL
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments (per-tool venvs)
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+
+# Environment and secrets (never commit)
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+
+# FTI: optional local override (repo config.py uses env vars; ignore if you use local config with keys)
+# FTI/config.py
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Tool-specific (optional; tools may have their own .gitignore)
+# PES database
+*.db
+*.sqlite
+*.sqlite3
+# SFS storage (uploaded files)
+SFS/storage/uploads/*
+SFS/storage/metadata/*
+!SFS/storage/uploads/.gitkeep
+!SFS/storage/metadata/.gitkeep
+SFS/storage/.encryption_key
+# WVS / IDM results if stored locally
+WVS/results/
+IDM/*.log
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/

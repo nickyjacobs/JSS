@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threat Intelligence Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f85149'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --bg-card: rgba(22, 27, 34, 0.8);
+      --bg-card-hover: rgba(30, 35, 42, 0.9);
+      --border: rgba(48, 54, 61, 0.5);
+      --border-hover: rgba(88, 166, 255, 0.3);
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent-red: #ff6b6b;
+      --accent-orange: #ffa94d;
+      --accent-green: #51cf66;
+      --accent-blue: #74c0fc;
+      --accent-purple: #b197fc;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(116, 192, 252, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(255, 107, 107, 0.1) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-blue);
+    }
+    header {
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(116, 192, 252, 0.2);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(116, 192, 252, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #74c0fc 0%, #b197fc 50%, #ff6b6b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-shadow: 0 0 30px rgba(116, 192, 252, 0.3);
+      position: relative;
+    }
+    h1 .shield-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 8px rgba(116, 192, 252, 0.5));
+      animation: pulse-shield 3s ease-in-out infinite;
+      background: linear-gradient(135deg, #74c0fc, #b197fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @keyframes pulse-shield {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(116, 192, 252, 0.5)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 12px rgba(116, 192, 252, 0.8)); }
+    }
+    .status {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .refresh-countdown {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 0.4rem 0.8rem;
+      background: rgba(116, 192, 252, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(116, 192, 252, 0.2);
+    }
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+    .live-dot.off {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    main {
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.75rem;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-md);
+      background: var(--bg-card-hover);
+    }
+    .card.wide { grid-column: span 2; }
+    .card.full { grid-column: span 4; }
+    .card h2 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    .stat-value.green {
+      background: linear-gradient(135deg, var(--accent-green), #51cf66);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-weight: 400;
+    }
+    .chart-container {
+      height: 200px !important;
+      min-height: 200px !important;
+      max-height: 200px !important;
+      position: relative !important;
+      margin-top: 0.5rem;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      overflow: visible !important;
+    }
+    .chart-container canvas {
+      height: 200px !important;
+      max-height: 200px !important;
+      min-height: 200px !important;
+      width: 100% !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .card.wide .chart-container {
+      height: 200px !important;
+      min-height: 200px !important;
+    }
+    .map-container {
+      height: 500px;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 0 !important;
+      background: var(--bg-dark);
+      position: relative;
+    }
+    .map-container .leaflet-container {
+      height: 100%;
+      width: 100%;
+    }
+    /* Ensure no spacing between h2 and map-container */
+    .card.wide h2 + .map-container {
+      margin-top: 0 !important;
+    }
+    .map-container > * {
+      margin: 0;
+      padding: 0;
+    }
+    /* Hide all Leaflet control containers */
+    #worldMap .leaflet-top,
+    #worldMap .leaflet-bottom,
+    #worldMap .leaflet-left,
+    #worldMap .leaflet-right,
+    #worldMap .leaflet-control-container,
+    #worldMap .leaflet-control-attribution {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+    }
+    .card.wide h2 {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+    #worldMap {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    /* Remove any empty space or bars between h2 and map */
+    .card.wide > h2 + *:not(.map-container):not(.map-legend) {
+      display: none !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .map-container .leaflet-container {
+      background: var(--bg-dark);
+    }
+    .map-container .leaflet-control-attribution {
+      display: none !important;
+    }
+    .map-container .leaflet-top {
+      display: none !important;
+    }
+    .map-container .leaflet-bottom {
+      display: none !important;
+    }
+    .map-legend {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+    .map-legend h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    .map-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.25rem 0;
+    }
+    .map-legend-color {
+      width: 20px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .country-popup {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .country-popup .leaflet-popup-content-wrapper {
+      background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(30, 35, 42, 0.98));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(116, 192, 252, 0.2);
+      border-radius: 12px;
+      padding: 0;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(116, 192, 252, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .country-popup .leaflet-popup-content {
+      margin: 0;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+    .country-popup .leaflet-popup-tip {
+      background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(30, 35, 42, 0.98));
+      border: 1px solid rgba(116, 192, 252, 0.2);
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .country-popup-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .country-popup-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .country-popup-threats {
+      font-weight: 500;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .back-to-world-button {
+      position: absolute;
+      top: 75px;
+      right: 35px;
+      z-index: 10000;
+      background: rgba(25, 35, 50, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      border: 1px solid rgba(116, 192, 252, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      opacity: 0.7;
+      pointer-events: auto;
+      box-shadow: 0 2px 8px rgba(116, 192, 252, 0.2);
+    }
+    .card.wide {
+      position: relative;
+    }
+    .back-to-world-button[data-visible="true"] {
+      display: block !important;
+      opacity: 0.7 !important;
+      visibility: visible !important;
+    }
+    .back-to-world-button:hover {
+      opacity: 1;
+      background: rgba(30, 45, 60, 0.95);
+      border-color: rgba(116, 192, 252, 0.5);
+      box-shadow: 0 4px 12px rgba(116, 192, 252, 0.3);
+      transform: translateY(-1px);
+    }
+    .back-to-world-button:active {
+      transform: translateY(0);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tbody tr {
+      transition: all 0.2s ease;
+    }
+    tbody tr:hover {
+      background: rgba(88, 166, 255, 0.1);
+      transform: scale(1.01);
+    }
+    .score {
+      color: var(--accent-red);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .country {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .indicator {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      word-break: break-all;
+      font-weight: 500;
+      color: var(--accent-blue);
+    }
+    .source-tag {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: linear-gradient(135deg, rgba(116, 192, 252, 0.2), rgba(177, 151, 252, 0.2));
+      color: var(--accent-blue);
+      font-weight: 500;
+      border: 1px solid rgba(116, 192, 252, 0.3);
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: white;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(116, 192, 252, 0.3);
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(116, 192, 252, 0.4);
+    }
+    button:active { transform: translateY(0); }
+    .updated {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      font-weight: 500;
+      padding: 0.5rem;
+      background: rgba(116, 192, 252, 0.05);
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .table-toolbar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .search-input {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      background: rgba(10, 14, 26, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(116, 192, 252, 0.1);
+    }
+    .status-banner {
+      margin: 0 2rem 1.5rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 169, 77, 0.15));
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: var(--text);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-sm);
+    }
+    .new-threats-badge {
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      color: white;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 0.75rem;
+      animation: bounce 0.5s ease;
+      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+    }
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 2rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .toast {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 300px;
+      box-shadow: var(--shadow-lg);
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .toast.success { border-left: 4px solid var(--accent-green); }
+    .toast.error { border-left: 4px solid var(--accent-red); }
+    .toast.info { border-left: 4px solid var(--accent-blue); }
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(116, 192, 252, 0.3);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      overflow: auto;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      margin: 5% auto;
+      padding: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .close-modal {
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      line-height: 1;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .close-modal:hover {
+      color: var(--text);
+      background: rgba(255, 107, 107, 0.2);
+      transform: rotate(90deg);
+    }
+    .ip-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .detail-item {
+      padding: 1rem;
+      background: rgba(10, 14, 26, 0.6);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .detail-item:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+    .detail-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .detail-value {
+      font-family: monospace;
+      color: var(--text);
+    }
+    @media (max-width: 1000px) {
+      main { grid-template-columns: 1fr 1fr; }
+      .card.wide { grid-column: span 2; }
+      .card.full { grid-column: span 2; }
+    }
+    @media (max-width: 600px) {
+      main { grid-template-columns: 1fr; }
+      .card.wide, .card.full { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      <span class="shield-icon">🛡️</span>
+      <span>Threat Intelligence Dashboard</span>
+      <span id="newThreatsBadge" class="new-threats-badge" style="display:none;"></span>
+    </h1>
+    <div class="status">
+      <span class="live-dot" id="liveDot"></span>
+      <span id="wsStatus">Connecting...</span>
+      <span class="refresh-countdown" id="refreshCountdown"></span>
+      <button onclick="refresh()" id="refreshBtn">Refresh</button>
+    </div>
+  </header>
+  <div id="toastContainer" class="toast-container"></div>
+  <div id="statusBanner" class="status-banner" style="display:none;"></div>
+  <main>
+    <div class="card">
+      <h2>📊 Total Threats</h2>
+      <div class="stat-value" id="totalThreats">-</div>
+      <div class="stat-label">Aggregated indicators</div>
+    </div>
+    <div class="card">
+      <h2>🔴 AbuseIPDB</h2>
+      <div class="stat-value" id="abuseCount">-</div>
+      <div class="stat-label">Blacklist IPs</div>
+    </div>
+    <div class="card">
+      <h2>🟡 AlienVault OTX</h2>
+      <div class="stat-value" id="otxCount">-</div>
+      <div class="stat-label">Pulse indicators</div>
+    </div>
+    <div class="card">
+      <h2>🔵 VirusTotal</h2>
+      <div class="stat-value" id="vtCount">-</div>
+      <div class="stat-label">Flagged IPs</div>
+    </div>
+    <!-- Row 1: Threats by Source and Threats by Type -->
+    <div class="card wide">
+      <h2>Threats by Source</h2>
+      <div class="chart-container"><canvas id="sourceChart"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Threats by Type</h2>
+      <div class="chart-container"><canvas id="typeChart"></canvas></div>
+    </div>
+    <!-- Row 2: Threat Velocity and Threat Timeline -->
+    <div class="card wide">
+      <h2>Threat Velocity</h2>
+      <div class="chart-container"><canvas id="velocityChart"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Threat Timeline (7 days)</h2>
+      <div class="chart-container"><canvas id="timelineChart"></canvas></div>
+    </div>
+    <!-- Row 3: OTX Tags and Threat Severity Distribution -->
+    <div class="card wide">
+      <h2>OTX Tags</h2>
+      <div class="chart-container"><canvas id="tagsChart"></canvas></div>
+    </div>
+    <div class="card wide">
+      <h2>Threat Severity Distribution</h2>
+      <div class="chart-container"><canvas id="severityChart"></canvas></div>
+    </div>
+    <!-- Row 4: Threats by Country and Country Heatmap -->
+    <div class="card wide">
+      <h2>Threats by Country</h2>
+      <div class="chart-container"><canvas id="countryChart"></canvas></div>
+    </div>
+    <div class="card wide" style="padding-bottom: 1.5rem; position: relative;">
+      <h2 style="margin-bottom: 0; padding-bottom: 0;">Country Heatmap</h2>
+      <div id="worldMap" class="map-container" style="margin-top: 0; margin-bottom: 0; padding-top: 0; position: relative;"></div>
+      <button id="backToWorldButton" class="back-to-world-button" onclick="zoomOutToWorld()" style="display: none;">Back to World Map</button>
+      <div class="map-legend" style="margin-top: 0.75rem;">
+        <h4>Threat Level</h4>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: rgba(248,81,73,0.9);"></div><span>High (50+)</span></div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: rgba(248,81,73,0.6);"></div><span>Medium (10-49)</span></div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: rgba(248,81,73,0.3);"></div><span>Low (1-9)</span></div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: rgba(48,54,61,0.5);"></div><span>None</span></div>
+      </div>
+    </div>
+    <div class="card full">
+      <h2>🎯 Top Threats</h2>
+      <div class="table-toolbar">
+        <input type="text" id="threatSearch" placeholder="Filter op IP, type, source..." class="search-input">
+        <button onclick="exportCSV()">Export CSV</button>
+        <button onclick="exportLists()" style="background: linear-gradient(135deg, var(--accent-green), #51cf66);">Export Lists</button>
+        <button onclick="importLists()" style="background: linear-gradient(135deg, var(--accent-purple), #b197fc);">Import Lists</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="handleFileImport(event)">
+      </div>
+      <div class="updated" id="updatedAt">-</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Indicator</th>
+            <th>Type</th>
+            <th>Risk Score</th>
+            <th>Severity</th>
+            <th>Country</th>
+            <th>Source</th>
+            <th>Threat Actor</th>
+            <th>Last Seen</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="threatTable"></tbody>
+      </table>
+    </div>
+  </main>
+  <div id="ipModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">IP Details</h2>
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  <script>
+    const WS_URL = (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws';
+    const POLL_INTERVAL = 300; // seconds
+    let ws;
+    let charts = {};
+    let lastThreats = [];
+    let refreshTimer = null;
+    let countdownInterval = null;
+    let worldMap = null;
+    let mapLayer = null;
+    let originalBounds = null;
+    let countryLabels = [];
+
+    function connect() {
+      ws = new WebSocket(WS_URL);
+      ws.onopen = () => {
+        document.getElementById('liveDot').classList.remove('off');
+        document.getElementById('wsStatus').textContent = 'Live';
+      };
+      ws.onclose = () => {
+        document.getElementById('liveDot').classList.add('off');
+        document.getElementById('wsStatus').textContent = 'Reconnecting...';
+        setTimeout(connect, 3000);
+      };
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          render(data);
+          startRefreshCountdown();
+        } catch (err) { 
+          console.error('WebSocket message parse error:', err);
+          console.error('Raw message:', e.data.substring(0, 200));
+        }
+      };
+    }
+
+    function startRefreshCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      let seconds = POLL_INTERVAL;
+      const updateCountdown = () => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('refreshCountdown').textContent = 
+          seconds > 0 ? `Next refresh: ${mins}:${String(secs).padStart(2,'0')}` : '';
+        if (seconds <= 0) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+        seconds--;
+      };
+      updateCountdown();
+      countdownInterval = setInterval(updateCountdown, 1000);
+    }
+
+
+    function initCharts() {
+      const opts = { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        animation: false, // Disable animation for faster rendering
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: '#f0f6fc'
+            }
+          }
+        }
+      };
+      try {
+        const countryCanvas = document.getElementById('countryChart');
+        if (countryCanvas) {
+          charts.country = new Chart(countryCanvas, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Threats', backgroundColor: 'rgba(248,81,73,0.8)', data: [] }] },
+            options: { 
+              ...opts, 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } 
+              } 
+            }
+          });
+        }
+      } catch (e) { console.error('Failed to init country chart:', e); }
+      
+      try {
+        const typeCanvas = document.getElementById('typeChart');
+        if (typeCanvas) {
+          charts.type = new Chart(typeCanvas, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ backgroundColor: ['#f85149','#d29922','#3fb950','#58a6ff','#a371f7'], data: [] }] },
+            options: opts
+          });
+        }
+      } catch (e) { console.error('Failed to init type chart:', e); }
+      
+      try {
+        const sourceCanvas = document.getElementById('sourceChart');
+        if (sourceCanvas) {
+          charts.source = new Chart(sourceCanvas, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ backgroundColor: ['#f85149','#d29922','#58a6ff'], data: [] }] },
+            options: opts
+          });
+        }
+      } catch (e) { console.error('Failed to init source chart:', e); }
+      
+      try {
+        const tagsCanvas = document.getElementById('tagsChart');
+        if (tagsCanvas) {
+          charts.tags = new Chart(tagsCanvas, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Pulses', backgroundColor: 'rgba(210,153,34,0.8)', data: [] }] },
+            options: { 
+              ...opts, 
+              indexAxis: 'y', 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } } 
+              } 
+            }
+          });
+        }
+      } catch (e) { console.error('Failed to init tags chart:', e); }
+      
+      try {
+        const timelineCanvas = document.getElementById('timelineChart');
+        if (timelineCanvas) {
+          charts.timeline = new Chart(timelineCanvas, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: { 
+              ...opts, 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true 
+              } 
+            } 
+          }
+          });
+        }
+      } catch (e) { console.error('Failed to init timeline chart:', e); }
+      
+      try {
+        const severityCanvas = document.getElementById('severityChart');
+        if (severityCanvas) {
+          charts.severity = new Chart(severityCanvas, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ backgroundColor: ['#ff6b6b','#ffa94d','#ffd43b','#74c0fc','#8b949e'], data: [] }] },
+            options: opts
+          });
+        }
+      } catch (e) { console.error('Failed to init severity chart:', e); }
+      
+      try {
+        const velocityCanvas = document.getElementById('velocityChart');
+        if (velocityCanvas) {
+          charts.velocity = new Chart(velocityCanvas, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Threats/Hour', backgroundColor: 'rgba(88,166,255,0.8)', data: [] }] },
+            options: { 
+              ...opts, 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e', maxRotation: 45 } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } 
+              } 
+            }
+          });
+        }
+      } catch (e) { console.error('Failed to init velocity chart:', e); }
+      
+      // Don't initialize map here - wait until charts are rendered
+      // initWorldMap();
+    }
+
+    function initWorldMap() {
+      if (worldMap) return;
+      
+      // First, ensure no spacing elements exist
+      const mapDiv = document.getElementById('worldMap');
+      if (mapDiv && mapDiv.previousElementSibling && mapDiv.previousElementSibling.tagName === 'H2') {
+        mapDiv.previousElementSibling.style.marginBottom = '0';
+        mapDiv.previousElementSibling.style.paddingBottom = '0';
+      }
+      
+      worldMap = L.map('worldMap', {
+        zoomControl: false, // Disable zoom controls
+        attributionControl: false,
+        minZoom: 1,
+        maxZoom: 5, // Increased max zoom for country zoom-in
+        dragging: false, // Disable panning
+        touchZoom: false,
+        doubleClickZoom: false,
+        scrollWheelZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        maxBounds: L.latLngBounds([-90, -180], [90, 180]), // Show all including Antarctica
+        worldCopyJump: false,
+      }).setView([10, 0], 1.5);
+      
+      // Map layers will be made clickable in onEachFeature
+      
+      // Removed map click handler - zoom out only via button
+      
+      // Immediately remove any top bars that Leaflet might add
+      setTimeout(() => {
+        const topBars = document.querySelectorAll('#worldMap .leaflet-top, #worldMap .leaflet-control-container');
+        topBars.forEach(bar => {
+          bar.style.display = 'none';
+          bar.remove();
+        });
+      }, 0);
+      
+      // Dark theme tile layer without labels (no continent names)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+        attribution: '',
+        subdomains: 'abcd',
+        maxZoom: 3
+      }).addTo(worldMap);
+      
+      // Aggressively remove ALL control bars from the map
+      const removeAllBars = () => {
+        const mapDiv = document.getElementById('worldMap');
+        if (!mapDiv) return;
+        
+        // Remove all Leaflet control containers
+        const selectors = [
+          '.leaflet-top',
+          '.leaflet-bottom', 
+          '.leaflet-left',
+          '.leaflet-right',
+          '.leaflet-control-container',
+          '.leaflet-control-attribution',
+          '.leaflet-control'
+        ];
+        
+        selectors.forEach(selector => {
+          const elements = mapDiv.querySelectorAll(selector);
+          elements.forEach(el => {
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+            el.style.opacity = '0';
+            el.style.height = '0';
+            el.style.width = '0';
+            el.style.margin = '0';
+            el.style.padding = '0';
+            el.remove();
+          });
+        });
+        
+        // Check parent container for any bars between h2 and map
+        const card = mapDiv.closest('.card');
+        if (card) {
+          Array.from(card.children).forEach(child => {
+            if (child !== mapDiv && child.tagName === 'DIV' && 
+                child.offsetHeight > 0 && child.offsetHeight < 50 &&
+                !child.classList.contains('map-legend')) {
+              child.remove();
+            }
+          });
+        }
+        
+        // Also check direct children and remove any that look like bars
+        Array.from(mapDiv.children).forEach(child => {
+          const classes = child.className || '';
+          const isControl = classes.includes('leaflet-control') || 
+                           classes.includes('leaflet-top') ||
+                           classes.includes('leaflet-bottom');
+          const isSmallBar = child.offsetHeight > 0 && 
+                            child.offsetHeight < 60 && 
+                            !classes.includes('leaflet-pane') &&
+                            !classes.includes('leaflet-map-pane') &&
+                            !classes.includes('leaflet-tile-pane') &&
+                            !classes.includes('leaflet-overlay-pane') &&
+                            !classes.includes('leaflet-shadow-pane') &&
+                            !classes.includes('leaflet-marker-pane') &&
+                            !classes.includes('leaflet-tooltip-pane') &&
+                            !classes.includes('leaflet-popup-pane');
+          
+          if (isControl || isSmallBar) {
+            child.remove();
+          }
+        });
+      };
+      
+      // Remove bars multiple times to catch them
+      removeAllBars();
+      setTimeout(removeAllBars, 10);
+      setTimeout(removeAllBars, 50);
+      setTimeout(removeAllBars, 100);
+      setTimeout(removeAllBars, 200);
+      setTimeout(removeAllBars, 500);
+      
+      // Also remove when map is ready
+      worldMap.whenReady(() => {
+        removeAllBars();
+        setTimeout(removeAllBars, 100);
+        
+        // Also check the card container for any bars
+        const card = document.querySelector('.card.wide h2[style*="margin-bottom"]')?.closest('.card');
+        if (card) {
+          const h2 = card.querySelector('h2');
+          const mapDiv = card.querySelector('#worldMap');
+          if (h2 && mapDiv) {
+            // Remove any element between h2 and mapDiv
+            let node = h2.nextSibling;
+            while (node && node !== mapDiv) {
+              if (node.nodeType === 1) { // Element node
+                const el = node;
+                if (el.offsetHeight < 100 && !el.classList.contains('map-legend')) {
+                  el.remove();
+                }
+              }
+              node = node.nextSibling;
+            }
+          }
+        }
+      });
+      
+      // Keep checking periodically
+      const checkInterval = setInterval(() => {
+        removeAllBars();
+        // Also remove any divs between h2 and map
+        const card = document.querySelector('.card.wide');
+        if (card) {
+          const h2 = card.querySelector('h2');
+          const mapDiv = card.querySelector('#worldMap');
+          if (h2 && mapDiv) {
+            let node = h2.nextSibling;
+            while (node && node !== mapDiv) {
+              if (node.nodeType === 1 && node.offsetHeight < 100) {
+                node.remove();
+              }
+              node = node.nextSibling;
+            }
+          }
+        }
+      }, 500);
+      
+      // Stop checking after 15 seconds
+      setTimeout(() => clearInterval(checkInterval), 15000);
+    }
+
+    function getThreatColor(count) {
+      if (!count || count === 0) return 'rgba(48,54,61,0.5)';
+      if (count >= 50) return 'rgba(248,81,73,0.9)';
+      if (count >= 10) return 'rgba(248,81,73,0.6)';
+      return 'rgba(248,81,73,0.3)';
+    }
+
+    async function loadWorldMapData(countryData) {
+      if (!worldMap) initWorldMap();
+      
+      
+      // Remove existing layer if present
+      if (mapLayer) {
+        worldMap.removeLayer(mapLayer);
+      }
+      // Close any open popups
+      worldMap.closePopup();
+
+      // Create a data map for quick lookup - normalize all keys to uppercase for consistent matching
+      const threatMap = {};
+      countryData.forEach(([code, count]) => {
+        if (code && code !== 'XX') {  // Skip 'XX' (Unknown) as it's not a real country code
+          const codeUpper = code.toUpperCase();
+          const codeLower = code.toLowerCase();
+          // Store in all variations for maximum compatibility
+          threatMap[codeUpper] = count;
+          threatMap[codeLower] = count;
+          threatMap[code] = count;
+        }
+      });
+      
+
+      try {
+        // Load world countries GeoJSON from a CDN
+        const response = await fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson');
+        const geojson = await response.json();
+        
+        let matchedCount = 0;
+        let totalThreats = 0;
+        const unmatchedCountries = [];
+        
+        
+        // Style and add data to each feature
+        geojson.features.forEach(feature => {
+          const props = feature.properties;
+          
+          // Try multiple ISO code properties - check all possible variations
+          const isoVariations = [
+            props.ISO_A2,
+            props.ISO_A2?.toUpperCase(),
+            props.ISO_A2?.toLowerCase(),
+            props.ISO2,
+            props.ISO2?.toUpperCase(),
+            props.ISO2?.toLowerCase(),
+            props.ISO_A2_EH,
+            props.ISO_A2_EH?.toUpperCase(),
+            props.ISO_A2_EH?.toLowerCase(),
+            props.ISO_A3,
+            props.ISO_A3?.toUpperCase(),
+            props.ISO_A3?.toLowerCase(),
+          ].filter(Boolean); // Remove undefined/null values
+          
+          // Try to find matching threat count - check all variations
+          let count = 0;
+          let matchedIso = null;
+          
+          // First try exact matches
+          for (const iso of isoVariations) {
+            if (iso && threatMap[iso]) {
+              count = threatMap[iso];
+              matchedIso = iso;
+              break;
+            }
+          }
+          
+          // If no ISO code match, try matching by country name
+          if (count === 0) {
+            const countryName = (props.name || props.NAME || props.ADMIN || props.NAME_LONG || '').toUpperCase().trim();
+            
+            // Map country names to ISO codes
+            const nameToIso = {
+              'SINGAPORE': 'SG',
+              'RUSSIA': 'RU',
+              'RUSSIAN FEDERATION': 'RU',
+              'SEYCHELLES': 'SC',
+              'UNITED STATES': 'US',
+              'UNITED STATES OF AMERICA': 'US',
+              'USA': 'US',
+              'NETHERLANDS': 'NL',
+              'THE NETHERLANDS': 'NL',
+            };
+            
+            // Try exact match first
+            if (nameToIso[countryName] && threatMap[nameToIso[countryName]]) {
+              count = threatMap[nameToIso[countryName]];
+              matchedIso = nameToIso[countryName];
+            } else {
+              // Try partial match
+              for (const [name, iso] of Object.entries(nameToIso)) {
+                if (countryName.includes(name) || name.includes(countryName)) {
+                  if (threatMap[iso]) {
+                    count = threatMap[iso];
+                    matchedIso = iso;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          
+          if (count > 0) {
+            matchedCount++;
+            totalThreats += count;
+            const countryName = props.name || props.NAME || props.ADMIN || props.NAME_LONG || 'Unknown';
+          } else {
+            // Check if this country should have been matched (for debugging)
+            const countryName = props.name || props.NAME || props.ADMIN || props.NAME_LONG || 'Unknown';
+            const countryNameUpper = countryName.toUpperCase();
+            const nameToIso = {
+              'SINGAPORE': 'SG',
+              'RUSSIA': 'RU',
+              'RUSSIAN FEDERATION': 'RU',
+              'SEYCHELLES': 'SC',
+              'UNITED STATES': 'US',
+              'UNITED STATES OF AMERICA': 'US',
+              'USA': 'US',
+              'NETHERLANDS': 'NL',
+            };
+            for (const [name, iso] of Object.entries(nameToIso)) {
+              if (countryNameUpper.includes(name) || name.includes(countryNameUpper)) {
+                if (threatMap[iso]) {
+                  unmatchedCountries.push(`${countryName} (should be ${iso})`);
+                }
+                break;
+              }
+            }
+          }
+          
+          feature.properties.threatCount = count;
+          // Try multiple property names for country name
+          feature.properties.name = feature.properties.NAME || 
+                                   feature.properties.ADMIN || 
+                                   feature.properties.name ||
+                                   feature.properties.NAME_LONG ||
+                                   feature.properties.NAME_EN ||
+                                   feature.properties.NAME_ALT ||
+                                   'Unknown';
+        });
+        
+
+        mapLayer = L.geoJSON(geojson, {
+          style: (feature) => {
+            const count = feature.properties.threatCount || 0;
+            const color = getThreatColor(count);
+            return {
+              fillColor: color,
+              fillOpacity: 0.8,
+              color: 'rgba(255,255,255,0.2)',
+              weight: 0.5,
+              interactive: true, // Ensure layers are clickable
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const count = feature.properties.threatCount || 0;
+            // Try multiple property names for country name
+            const name = feature.properties.name || 
+                        feature.properties.NAME || 
+                        feature.properties.ADMIN || 
+                        feature.properties.NAME_LONG ||
+                        feature.properties.NAME_EN ||
+                        feature.properties.NAME_ALT ||
+                        'Unknown';
+            
+            // Store the name in the feature properties for later use
+            feature.properties.displayName = name;
+            
+            // Ensure layer is interactive and clickable
+            if (layer.setStyle) {
+              layer.options.interactive = true;
+            }
+            
+            // Remove hover tooltip, we'll use click popup instead
+            // layer.bindTooltip is removed - no hover tooltip
+            layer.on({
+              mouseover: (e) => {
+                const layer = e.target;
+                layer.setStyle({
+                  weight: 2,
+                  color: '#74c0fc',
+                  fillOpacity: 0.9,
+                });
+              },
+              mouseout: (e) => {
+                mapLayer.resetStyle(e.target);
+              },
+              click: (e) => {
+                // Prevent default behavior but allow event to bubble for map interaction
+                if (e.originalEvent) {
+                  e.originalEvent.preventDefault();
+                  L.DomEvent.stopPropagation(e.originalEvent);
+                }
+                
+                const layer = e.target;
+                const props = layer.feature.properties;
+                // Use displayName if available, otherwise try multiple property names
+                const name = props.displayName || 
+                            props.name || 
+                            props.NAME || 
+                            props.ADMIN || 
+                            props.NAME_LONG ||
+                            props.NAME_EN ||
+                            props.NAME_ALT ||
+                            'Unknown';
+                const count = props.threatCount || 0;
+                
+                // Don't stop propagation - let clicks work normally
+                // The map click handler checks for .leaflet-interactive anyway
+                
+                // Check if we're already zoomed in
+                const currentZoom = worldMap.getZoom();
+                const isZoomedIn = currentZoom > 2;
+                
+                // Reset previous highlighted country if exists
+                if (window.currentHighlightedLayer && window.currentHighlightedLayer !== layer) {
+                  mapLayer.resetStyle(window.currentHighlightedLayer);
+                }
+                
+                // Remove any existing popups
+                worldMap.closePopup();
+                
+                // Get click position
+                const latlng = e.latlng;
+                
+                // Create and show popup with country name and threat count
+                const popup = L.popup({
+                  className: 'country-popup',
+                  closeButton: false,
+                  autoClose: false,
+                  closeOnClick: true,
+                  offset: [0, -10]
+                })
+                .setLatLng(latlng)
+                .setContent(`
+                  <div class="country-popup-content">
+                    <div class="country-popup-name">${name}</div>
+                    <div class="country-popup-threats">Threats: ${count}</div>
+                  </div>
+                `)
+                .openOn(worldMap);
+                
+                // Highlight clicked country
+                layer.setStyle({
+                  weight: 3,
+                  color: '#ffa94d',
+                  fillOpacity: 1,
+                });
+                
+                // Store original bounds if not already stored
+                if (!originalBounds && mapLayer.getBounds().isValid()) {
+                  originalBounds = mapLayer.getBounds();
+                }
+                
+                // Get bounds of clicked country
+                const countryBounds = layer.getBounds();
+                if (countryBounds.isValid()) {
+                  // Always zoom directly to the clicked country
+                  worldMap.fitBounds(countryBounds, {
+                    padding: [50, 50],
+                    maxZoom: 4,
+                    animate: true,
+                    duration: isZoomedIn ? 0.5 : 0.8 // Faster animation if already zoomed
+                  });
+                  
+                  // Store the highlighted layer to reset style later
+                  window.currentHighlightedLayer = layer;
+                  
+                  // Show back to world button immediately with aggressive visibility
+                  const backButton = document.getElementById('backToWorldButton');
+                  if (backButton) {
+                    // Remove all inline styles first
+                    backButton.removeAttribute('style');
+                    
+                    // Set attribute
+                    backButton.setAttribute('data-visible', 'true');
+                    
+                    // Force visibility with cssText (overwrites everything)
+                    backButton.style.cssText = 'display: block !important; opacity: 0.7 !important; visibility: visible !important; position: absolute !important; top: 75px !important; right: 35px !important; z-index: 10000 !important; pointer-events: auto !important;';
+                    
+                    
+                    // Aggressively keep it visible every 50ms
+                    const forceVisibleInterval = setInterval(() => {
+                      const btn = document.getElementById('backToWorldButton');
+                      if (btn && btn.getAttribute('data-visible') === 'true') {
+                        btn.style.cssText = 'display: block !important; opacity: 0.7 !important; visibility: visible !important; position: absolute !important; top: 75px !important; right: 35px !important; z-index: 10000 !important; pointer-events: auto !important;';
+                      } else {
+                        clearInterval(forceVisibleInterval);
+                      }
+                    }, 50);
+                  }
+                }
+              },
+            });
+          },
+        }).addTo(worldMap);
+        
+        // Ensure all layers are interactive after adding to map
+        mapLayer.eachLayer((layer) => {
+          if (layer.setStyle) {
+            layer.options.interactive = true;
+            // Force enable interaction on SVG paths
+            if (layer._path) {
+              layer._path.style.pointerEvents = 'visiblePainted';
+              layer._path.style.cursor = 'pointer';
+            }
+            // Also ensure the layer itself is clickable
+            if (layer.on) {
+              // Verify click handler is attached
+              const hasClickHandler = layer._events && layer._events.click && layer._events.click.length > 0;
+              if (!hasClickHandler) {
+              }
+            }
+          }
+        });
+        
+        
+        // Auto-fit map to show all countries with optimal padding
+        if (mapLayer.getBounds().isValid()) {
+          const bounds = mapLayer.getBounds();
+          // Store original bounds for zoom-out functionality
+          originalBounds = bounds;
+          
+          // Use padding to ensure all countries are visible with nice spacing
+          worldMap.fitBounds(bounds, {
+            padding: [30, 30], // More padding for better visibility
+            maxZoom: 1.5, // Slightly lower zoom for better overview
+            animate: false
+          });
+          
+          // Ensure the map is properly centered
+          setTimeout(() => {
+            worldMap.invalidateSize();
+            worldMap.fitBounds(bounds, {
+              padding: [30, 30],
+              maxZoom: 1.5,
+              animate: false
+            });
+          }, 100);
+        } else {
+          // Fallback: set view to show entire world nicely centered
+          worldMap.setView([10, 0], 1.5);
+        }
+      } catch (err) {
+        console.error('Failed to load world map:', err);
+        // Show error message in map container
+        const container = document.getElementById('worldMap');
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Kaart laden mislukt. Probeer de pagina te verversen.</div>';
+      }
+    }
+
+    function render(data) {
+      try {
+        const agg = data.aggregate || {};
+        const total = agg.total_threats ?? 0;
+        document.getElementById('totalThreats').textContent = total;
+        const bySource = agg.by_source || {};
+        document.getElementById('abuseCount').textContent = bySource.abuseipdb ?? '-';
+        document.getElementById('otxCount').textContent = bySource.otx ?? '-';
+        document.getElementById('vtCount').textContent = bySource.virustotal ?? '-';
+        document.getElementById('updatedAt').textContent = 'Updated: ' + (data.timestamp || '-');
+
+        // Update charts with data - ensure charts exist first
+        if (!charts.country || !charts.type || !charts.source || !charts.tags || !charts.severity || !charts.velocity) {
+          // Only initialize missing charts
+          if (!charts.country) {
+            try {
+              charts.country = new Chart(document.getElementById('countryChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Threats', backgroundColor: 'rgba(248,81,73,0.8)', data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#30363d' } }, y: { grid: { color: '#30363d' } } } }
+              });
+            } catch (e) { console.error('Failed to init country chart:', e); }
+          }
+          if (!charts.type) {
+            try {
+              charts.type = new Chart(document.getElementById('typeChart'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ backgroundColor: ['#f85149','#d29922','#3fb950','#58a6ff','#a371f7'], data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            } catch (e) { console.error('Failed to init type chart:', e); }
+          }
+          if (!charts.source) {
+            try {
+              charts.source = new Chart(document.getElementById('sourceChart'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ backgroundColor: ['#f85149','#d29922','#58a6ff'], data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            } catch (e) { console.error('Failed to init source chart:', e); }
+          }
+          if (!charts.tags) {
+            try {
+              charts.tags = new Chart(document.getElementById('tagsChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Pulses', backgroundColor: 'rgba(210,153,34,0.8)', data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { grid: { color: '#30363d' } }, y: { grid: { color: '#30363d' } } } }
+              });
+            } catch (e) { console.error('Failed to init tags chart:', e); }
+          }
+          if (!charts.severity) {
+            try {
+              charts.severity = new Chart(document.getElementById('severityChart'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ backgroundColor: ['#ff6b6b','#ffa94d','#ffd43b','#74c0fc','#8b949e'], data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            } catch (e) { console.error('Failed to init severity chart:', e); }
+          }
+          if (!charts.velocity) {
+            try {
+              charts.velocity = new Chart(document.getElementById('velocityChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Threats/Hour', backgroundColor: 'rgba(88,166,255,0.8)', data: [] }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e', maxRotation: 45 } }, y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } } }
+              });
+            } catch (e) { console.error('Failed to init velocity chart:', e); }
+          }
+        }
+        
+        // Update charts - destroy and recreate to ensure proper rendering
+        const opts = { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: '#f0f6fc'
+              }
+            }
+          }
+        };
+        
+        // Helper function to safely recreate chart
+        function recreateChart(chartName, canvasId, config, retries = 0) {
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) {
+            console.error(`Canvas ${canvasId} not found!`);
+            return;
+          }
+          
+          // Check if Chart.js is loaded
+          if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded!');
+            return;
+          }
+          
+          const container = canvas.parentElement;
+          const card = container?.closest('.card');
+          
+          // Force card to be visible
+          if (card) {
+            card.style.display = 'grid';
+            card.style.visibility = 'visible';
+            card.style.opacity = '1';
+            card.style.height = 'auto';
+            card.style.minHeight = '250px';
+          }
+          
+          // Force container to have size
+          if (container) {
+            container.style.setProperty('height', '200px', 'important');
+            container.style.setProperty('min-height', '200px', 'important');
+            container.style.setProperty('max-height', '200px', 'important');
+            container.style.setProperty('display', 'block', 'important');
+            container.style.setProperty('visibility', 'visible', 'important');
+            container.style.setProperty('opacity', '1', 'important');
+            container.style.setProperty('overflow', 'visible', 'important');
+          }
+          
+          // Force canvas to have size
+          canvas.style.setProperty('width', '100%', 'important');
+          canvas.style.setProperty('height', '200px', 'important');
+          canvas.style.setProperty('min-height', '200px', 'important');
+          canvas.style.setProperty('max-height', '200px', 'important');
+          canvas.style.setProperty('display', 'block', 'important');
+          canvas.style.setProperty('visibility', 'visible', 'important');
+          canvas.style.setProperty('opacity', '1', 'important');
+          
+          // Set explicit width/height attributes
+          canvas.width = container ? container.offsetWidth || 400 : 400;
+          canvas.height = 200;
+          
+          // Check canvas visibility and size
+          const rect = canvas.getBoundingClientRect();
+          
+          // If canvas still has no size after forcing, wait a bit and try again (max 10 retries)
+          if ((rect.width === 0 || rect.height === 0) && retries < 10) {
+            setTimeout(() => recreateChart(chartName, canvasId, config, retries + 1), 200);
+            return;
+          }
+          
+          if (retries >= 10) {
+            console.error(`${chartName} canvas failed to get size after 10 retries!`);
+            return;
+          }
+          
+          // Destroy existing chart if it exists
+          if (charts[chartName]) {
+            try {
+              charts[chartName].destroy();
+            } catch (e) {
+            }
+          }
+          
+          // Create new chart
+          try {
+            charts[chartName] = new Chart(canvas, config);
+            
+            // Force resize and update
+            setTimeout(() => {
+              if (charts[chartName]) {
+                charts[chartName].resize();
+                charts[chartName].update();
+              }
+            }, 100);
+          } catch (e) {
+            console.error(`Error creating ${chartName} chart:`, e, e.stack);
+          }
+        }
+        
+        // Wait a bit for containers to be visible before creating charts
+        setTimeout(() => {
+          // Country chart
+          const topCountries = (agg.metrics?.top_countries || []).slice(0, 8);
+          recreateChart('country', 'countryChart', {
+          type: 'bar',
+          data: { 
+            labels: topCountries.map(c => (c[0] && c[0] !== 'XX') ? c[0] : '-'),
+            datasets: [{ 
+              label: 'Threats', 
+              backgroundColor: 'rgba(248,81,73,0.8)', 
+              data: topCountries.map(c => c[1] || 0) 
+            }] 
+          },
+          options: { 
+            ...opts, 
+            scales: { 
+              x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+              y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } 
+            } 
+          }
+        });
+        
+          // Type chart
+          const topTypes = (agg.metrics?.top_types || []).slice(0, 5);
+          recreateChart('type', 'typeChart', {
+            type: 'doughnut',
+            data: { 
+              labels: topTypes.map(t => t[0] || 'unknown'),
+              datasets: [{ 
+                backgroundColor: ['#f85149','#d29922','#3fb950','#58a6ff','#a371f7'], 
+                data: topTypes.map(t => t[1] || 0) 
+              }] 
+            },
+            options: opts
+          });
+          
+          // Source chart
+          const sources = agg.by_source || {};
+          recreateChart('source', 'sourceChart', {
+            type: 'doughnut',
+            data: { 
+              labels: Object.keys(sources),
+              datasets: [{ 
+                backgroundColor: ['#f85149','#d29922','#58a6ff'], 
+                data: Object.values(sources) 
+              }] 
+            },
+            options: opts
+          });
+        
+          // Tags chart
+          const otxSource = data.sources?.otx;
+          const tagData = otxSource?.metrics?.by_tag ? Object.entries(otxSource.metrics.by_tag).slice(0, 8) : [];
+          recreateChart('tags', 'tagsChart', {
+            type: 'bar',
+            data: { 
+              labels: tagData.map(t => t[0]),
+              datasets: [{ 
+                label: 'Pulses', 
+                backgroundColor: 'rgba(210,153,34,0.8)', 
+                data: tagData.map(t => t[1]) 
+              }] 
+            },
+            options: { 
+              ...opts, 
+              indexAxis: 'y', 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } } 
+              } 
+            }
+          });
+          
+          // Severity Distribution chart
+          const severityDist = agg.by_severity || {};
+          const severityOrder = ['critical', 'high', 'medium', 'low', 'info'];
+          const severityLabels = severityOrder.filter(s => severityDist[s] > 0);
+          const severityData = severityLabels.map(s => severityDist[s] || 0);
+          recreateChart('severity', 'severityChart', {
+            type: 'doughnut',
+            data: { 
+              labels: severityLabels.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+              datasets: [{ 
+                backgroundColor: ['#ff6b6b','#ffa94d','#ffd43b','#74c0fc','#8b949e'],
+                data: severityData
+              }] 
+            },
+            options: opts
+          });
+          
+          // Threat Velocity chart
+          const velocityData = agg.velocity || {};
+          const hourlyDist = velocityData.hourly_distribution || {};
+          const hours = Array.from({length: 24}, (_, i) => i);
+          const threatsPerHour = hours.map(h => hourlyDist[h] || 0);
+          recreateChart('velocity', 'velocityChart', {
+            type: 'bar',
+            data: { 
+              labels: hours.map(h => `${h}:00`),
+              datasets: [{ 
+                label: 'Threats/Hour', 
+                backgroundColor: 'rgba(88,166,255,0.8)', 
+                data: threatsPerHour
+              }] 
+            },
+            options: { 
+              ...opts, 
+              scales: { 
+                x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e', maxRotation: 45 } }, 
+                y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } 
+              } 
+            }
+          });
+        }, 300); // Wait 300ms for containers to be visible
+
+        showStatusBanner(data, total);
+        updateNewThreatsBadge(data);
+
+        lastThreats = agg.top_threats || [];
+        filterAndRenderTable();
+        
+        // Load timeline after a delay to ensure canvas is ready
+        setTimeout(() => {
+          loadTimeline();
+        }, 400);
+        
+        // Update world map with current country data (use same data as country chart)
+        // Use by_country for better coverage, but also include top_countries
+        const topCountries = agg.metrics?.top_countries || [];
+        const byCountry = Object.entries(agg.by_country || {});
+        
+        // Combine both sources, prioritizing top_countries but including all from by_country
+        const countryMap = new Map();
+        
+        // Add top_countries first (these are what the chart shows)
+        topCountries.forEach(([code, count]) => {
+          if (code && code !== 'XX' && count > 0) {
+            countryMap.set(code, count);
+          }
+        });
+        
+        // Add any additional countries from by_country
+        byCountry.forEach(([code, count]) => {
+          if (code && code !== 'XX' && count > 0) {
+            const existing = countryMap.get(code) || 0;
+            countryMap.set(code, Math.max(existing, count));
+          }
+        });
+        
+        const finalCountryData = Array.from(countryMap.entries());
+        
+        
+        if (finalCountryData.length > 0) {
+          setTimeout(() => {
+            loadWorldMapData(finalCountryData).catch(err => {
+              console.error('Map update failed:', err);
+              // Don't let map errors break the rest of the rendering
+            });
+          }, 500); // Wait 500ms after charts are rendered
+        } else {
+        }
+      } catch (err) {
+        console.error('Render error:', err);
+        // Still try to show what we can
+        if (data.aggregate) {
+          lastThreats = data.aggregate.top_threats || [];
+          filterAndRenderTable();
+        }
+      }
+    }
+
+    async function loadTimeline() {
+      try {
+        const res = await fetch('/api/history/timeline?days=7');
+        const { timeline } = await res.json();
+        
+        const timelineCanvas = document.getElementById('timelineChart');
+        if (!timelineCanvas) {
+          console.error('Timeline canvas not found!');
+          return;
+        }
+        
+        const container = timelineCanvas.parentElement;
+        const card = container?.closest('.card');
+        
+        // Force card and container to be visible
+        if (card) {
+          card.style.display = 'grid';
+          card.style.visibility = 'visible';
+          card.style.opacity = '1';
+          card.style.height = 'auto';
+          card.style.minHeight = '250px';
+        }
+        
+        if (container) {
+          container.style.setProperty('height', '200px', 'important');
+          container.style.setProperty('min-height', '200px', 'important');
+          container.style.setProperty('max-height', '200px', 'important');
+          container.style.setProperty('display', 'block', 'important');
+          container.style.setProperty('visibility', 'visible', 'important');
+          container.style.setProperty('opacity', '1', 'important');
+        }
+        
+        timelineCanvas.style.setProperty('width', '100%', 'important');
+        timelineCanvas.style.setProperty('height', '200px', 'important');
+        timelineCanvas.style.setProperty('min-height', '200px', 'important');
+        timelineCanvas.style.setProperty('display', 'block', 'important');
+        timelineCanvas.style.setProperty('visibility', 'visible', 'important');
+        
+        timelineCanvas.width = container ? container.offsetWidth || 400 : 400;
+        timelineCanvas.height = 200;
+        
+        // Wait for canvas to be ready (max 10 retries)
+        let retries = 0;
+        const checkCanvas = () => {
+          const rect = timelineCanvas.getBoundingClientRect();
+          if ((rect.width === 0 || rect.height === 0) && retries < 10) {
+            retries++;
+            setTimeout(checkCanvas, 200);
+            return;
+          }
+          
+          if (retries >= 10) {
+            console.error('Timeline canvas failed to get size after 10 retries!');
+            return;
+          }
+          
+          // Destroy existing chart
+          if (charts.timeline) {
+            try {
+              charts.timeline.destroy();
+            } catch (e) {
+            }
+          }
+          
+          // Prepare data
+          const labels = timeline && timeline.length > 0 ? timeline.map(t => t.date) : [];
+          const sources = ['abuseipdb', 'otx', 'virustotal'];
+          const datasets = timeline && timeline.length > 0 ? sources.map((src, i) => ({
+            label: src,
+            data: timeline.map(t => t.by_source[src] || 0),
+            borderColor: ['#f85149', '#d29922', '#58a6ff'][i],
+            backgroundColor: ['rgba(248,81,73,0.2)', 'rgba(210,153,34,0.2)', 'rgba(88,166,255,0.2)'][i],
+            tension: 0.4,
+            fill: true,
+          })) : [];
+          
+          // Create new chart
+          const opts = { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: {
+                display: true,
+                labels: {
+                  color: '#f0f6fc'
+                }
+              }
+            },
+            scales: { 
+              x: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, 
+              y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' }, beginAtZero: true } 
+            }
+          };
+          
+          try {
+            charts.timeline = new Chart(timelineCanvas, {
+              type: 'line',
+              data: { labels, datasets },
+              options: opts
+            });
+            
+            setTimeout(() => {
+              if (charts.timeline) {
+                charts.timeline.resize();
+                charts.timeline.update();
+              }
+            }, 100);
+          } catch (e) {
+            console.error('Error creating timeline chart:', e, e.stack);
+          }
+        };
+        
+        checkCanvas();
+      } catch (err) {
+        console.error('Timeline load failed:', err);
+      }
+    }
+
+    async function loadHeatmap() {
+      try {
+        // Get country data from current render data
+        const agg = (await fetch('/api/data').then(r => r.json())).aggregate || {};
+        const countryData = agg.metrics?.top_countries || [];
+        
+        if (countryData.length > 0) {
+          await loadWorldMapData(countryData);
+        }
+      } catch (err) {
+        console.error('World map load failed:', err);
+      }
+    }
+
+    function filterAndRenderTable() {
+      const q = (document.getElementById('threatSearch')?.value || '').toLowerCase();
+      const filtered = q ? lastThreats.filter(t =>
+        (t.indicator || '').toLowerCase().includes(q) ||
+        (t.type || '').toLowerCase().includes(q) ||
+        (t.source || '').toLowerCase().includes(q) ||
+        (t.country || '').toLowerCase().includes(q)
+      ) : lastThreats;
+      const tbody = document.getElementById('threatTable');
+      tbody.innerHTML = filtered.slice(0, 50).map(t => {
+        const riskScore = t.risk_score ?? t.score ?? 0;
+        const severity = t.severity || (riskScore >= 75 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 25 ? 'medium' : 'low');
+        const severityColors = {
+          critical: '#ff6b6b',
+          high: '#ffa94d',
+          medium: '#ffd43b',
+          low: '#74c0fc',
+          info: '#8b949e'
+        };
+        const severityColor = severityColors[severity] || '#8b949e';
+        const threatActors = Array.isArray(t.threat_actors) ? t.threat_actors : (t.threat_actors ? [t.threat_actors] : []);
+        const actorDisplay = threatActors.length > 0 ? threatActors.slice(0, 2).join(', ') : '-';
+        
+        return `
+        <tr onclick="showIPDetails('${escapeHtml(t.indicator || '')}', '${escapeHtml(t.source || '')}')" style="cursor: pointer;">
+          <td class="indicator">${escapeHtml(t.indicator || '-')}</td>
+          <td>${escapeHtml(t.type || '-')}</td>
+          <td class="score" style="font-weight: 600; color: ${severityColor};">${riskScore.toFixed(1)}</td>
+          <td><span style="padding: 0.25rem 0.5rem; border-radius: 4px; background: ${severityColor}20; color: ${severityColor}; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">${severity}</span></td>
+          <td class="country">${escapeHtml((t.country && t.country !== 'XX') ? t.country : '-')}</td>
+          <td>${Array.isArray(t.sources) && t.sources.length > 1 ? `<span class="source-tag" style="background: linear-gradient(135deg, #ffa94d, #ffd43b);" title="Multiple sources: ${escapeHtml(t.sources.join(', '))}">${escapeHtml(t.sources.join('+'))}</span>` : `<span class="source-tag">${escapeHtml(t.source || t.sources?.[0] || '-')}</span>`}</td>
+          <td style="font-size: 0.85rem; color: var(--accent-orange);">${escapeHtml(actorDisplay)}</td>
+          <td>${escapeHtml(String(t.last_seen || '-').slice(0, 19))}</td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;">
+              <button onclick="event.stopPropagation(); addToWhitelist('${escapeHtml(t.indicator || '')}')" style="padding: 0.35rem 0.65rem; font-size: 0.7rem; background: linear-gradient(135deg, var(--accent-green), #51cf66);">✓ Whitelist</button>
+              <button onclick="event.stopPropagation(); addToBlacklist('${escapeHtml(t.indicator || '')}')" style="padding: 0.35rem 0.65rem; font-size: 0.7rem; background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));">✗ Blacklist</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      }).join('');
+    }
+
+
+    function showIPDetails(ip, source) {
+      const threat = lastThreats.find(t => t.indicator === ip && t.source === source);
+      if (!threat) return;
+      document.getElementById('modalTitle').textContent = `Details: ${ip}`;
+      const raw = threat.raw || {};
+      const body = document.getElementById('modalBody');
+      body.innerHTML = `
+        <div class="ip-details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Indicator</div>
+            <div class="detail-value">${escapeHtml(ip)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Type</div>
+            <div class="detail-value">${escapeHtml(threat.type || '-')}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Source</div>
+            <div class="detail-value">${escapeHtml(source)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Score</div>
+            <div class="detail-value">${threat.score ?? '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Country</div>
+            <div class="detail-value">${escapeHtml((threat.country && threat.country !== 'XX') ? threat.country : '-')}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Last Seen</div>
+            <div class="detail-value">${escapeHtml(String(threat.last_seen || '-').slice(0, 19))}</div>
+          </div>
+          ${threat.pulse_name ? `<div class="detail-item">
+            <div class="detail-label">OTX Pulse</div>
+            <div class="detail-value">${escapeHtml(threat.pulse_name)}</div>
+          </div>` : ''}
+          ${threat.tags ? `<div class="detail-item">
+            <div class="detail-label">Tags</div>
+            <div class="detail-value">${escapeHtml(threat.tags.join(', '))}</div>
+          </div>` : ''}
+          ${raw.reputation !== undefined ? `<div class="detail-item">
+            <div class="detail-label">VT Reputation</div>
+            <div class="detail-value">${raw.reputation}</div>
+          </div>` : ''}
+          ${raw.malicious !== undefined ? `<div class="detail-item">
+            <div class="detail-label">VT Malicious</div>
+            <div class="detail-value">${raw.malicious}</div>
+          </div>` : ''}
+          ${raw.as_owner ? `<div class="detail-item" style="grid-column: span 2;">
+            <div class="detail-label">AS Owner</div>
+            <div class="detail-value">${escapeHtml(raw.as_owner)}</div>
+          </div>` : ''}
+        </div>
+        ${raw.last_analysis_stats ? `<div style="margin-top: 1rem;">
+          <div class="detail-label">VirusTotal Analysis</div>
+          <pre style="background: var(--bg-dark); padding: 1rem; border-radius: 6px; overflow-x: auto;">${JSON.stringify(raw.last_analysis_stats, null, 2)}</pre>
+        </div>` : ''}
+      `;
+      document.getElementById('ipModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('ipModal').style.display = 'none';
+    }
+
+    window.onclick = (e) => {
+      const modal = document.getElementById('ipModal');
+      if (e.target === modal) closeModal();
+    }
+
+    function exportCSV() {
+      const headers = ['Indicator','Type','Score','Country','Source','Last Seen'];
+      const rows = lastThreats.map(t => [t.indicator||'', t.type||'', t.score??'', t.country||'', t.source||'', (t.last_seen||'').slice(0,19)]);
+      const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(','))].join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = 'threats_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('threatSearch')?.addEventListener('input', filterAndRenderTable);
+    });
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function showStatusBanner(data, total) {
+      const banner = document.getElementById('statusBanner');
+      if (total > 0) {
+        banner.style.display = 'none';
+        return;
+      }
+      const issues = [];
+      const src = data.sources || {};
+      const missingKeys = [];
+      
+      if (src._timeout?.error) {
+        issues.push(src._timeout.error);
+      } else {
+        if (src.abuseipdb?.error) {
+          const err = src.abuseipdb.error;
+          if (err.includes('Geen API key')) {
+            missingKeys.push('AbuseIPDB');
+            issues.push('AbuseIPDB: Geen API key geconfigureerd');
+          } else if (err.includes('429')) {
+            issues.push('AbuseIPDB: Rate limit (max 1000/dag)');
+          } else {
+            issues.push('AbuseIPDB: ' + err.slice(0,50));
+          }
+        }
+        if (src.otx?.error) {
+          const err = src.otx.error;
+          if (err.includes('Geen API key')) {
+            missingKeys.push('OTX');
+            issues.push('OTX: Geen API key geconfigureerd');
+          } else if (err.includes('OTXv2 SDK niet geïnstalleerd')) {
+            issues.push('OTX: OTXv2 SDK niet geïnstalleerd (pip install OTXv2)');
+          } else {
+            issues.push('OTX: ' + err.slice(0,60));
+          }
+        }
+        if (src.virustotal?.error) {
+          const err = src.virustotal.error;
+          if (err.includes('Geen API key')) {
+            missingKeys.push('VirusTotal');
+            issues.push('VirusTotal: Geen API key geconfigureerd');
+          } else {
+            issues.push('VirusTotal: ' + err.slice(0,50));
+          }
+        }
+      }
+      
+      if (issues.length === 0) {
+        issues.push('Data wordt opgehaald... (kan tot 60 sec duren)');
+      }
+      
+      let message = '<strong>Geen threats gevonden.</strong> ' + issues.join(' | ');
+      
+      if (missingKeys.length > 0) {
+        message += '<br><small style="opacity: 0.8;">💡 Tip: Configureer API keys in <code>LTID/.env</code> voor volledige functionaliteit. Zie <code>LTID/README.md</code> voor instructies.</small>';
+      }
+      
+      banner.innerHTML = message;
+      banner.style.display = 'block';
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+      toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(400px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    let lastVisitTotal = parseInt(localStorage.getItem('lastVisitTotal') || '0', 10);
+    let currentTotal = 0;
+
+    function updateNewThreatsBadge(data) {
+      const badge = document.getElementById('newThreatsBadge');
+      currentTotal = data.aggregate?.total_threats || 0;
+      const newThreats = Math.max(0, currentTotal - lastVisitTotal);
+      if (newThreats > 0 && lastVisitTotal > 0) {
+        badge.textContent = `+${newThreats} nieuw`;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+      localStorage.setItem('lastVisitTotal', currentTotal.toString());
+      localStorage.setItem('lastVisitTime', Date.now().toString());
+    }
+
+    async function refresh() {
+      const btn = document.getElementById('refreshBtn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span> Refreshing...';
+      try {
+        const res = await fetch('/api/refresh', { method: 'POST' });
+        if (res.ok) {
+          const data = await fetch('/api/data').then(r => r.json());
+          render(data);
+          showToast('Data refreshed successfully', 'success');
+        } else {
+          showToast('Refresh mislukt', 'error');
+        }
+      } catch (err) {
+        showToast('Fout bij refresh: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    async function addToWhitelist(ip) {
+      try {
+        const res = await fetch('/api/lists/whitelist', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({indicator: ip})
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message || `Toegevoegd aan whitelist`, 'success');
+          refresh();
+        } else {
+          showToast(data.detail || 'Fout bij toevoegen', 'error');
+        }
+      } catch (err) {
+        showToast('Fout: ' + err.message, 'error');
+      }
+    }
+
+    async function addToBlacklist(ip) {
+      try {
+        const res = await fetch('/api/lists/blacklist', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({indicator: ip})
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message || `Toegevoegd aan blacklist`, 'success');
+          refresh();
+        } else {
+          showToast(data.detail || 'Fout bij toevoegen', 'error');
+        }
+      } catch (err) {
+        showToast('Fout: ' + err.message, 'error');
+      }
+    }
+
+    async function exportLists() {
+      try {
+        const res = await fetch('/api/lists/export');
+        const data = await res.json();
+        const json = JSON.stringify(data, null, 2);
+        const a = document.createElement('a');
+        a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+        a.download = 'threat_lists_' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        showToast('Lists geëxporteerd', 'success');
+      } catch (err) {
+        showToast('Export mislukt: ' + err.message, 'error');
+      }
+    }
+
+    function importLists() {
+      document.getElementById('importFile').click();
+    }
+
+    async function handleFileImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        const res = await fetch('/api/lists/import', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          showToast(`Geïmporteerd: ${result.imported.whitelist} whitelist, ${result.imported.blacklist} blacklist`, 'success');
+          refresh();
+        } else {
+          showToast('Import mislukt', 'error');
+        }
+      } catch (err) {
+        showToast('Fout bij lezen bestand: ' + err.message, 'error');
+      }
+      event.target.value = '';
+    }
+
+    function zoomOutToWorld() {
+      
+      // Close any open popups first
+      try {
+        const popup = document.querySelector('.leaflet-popup');
+        if (popup) {
+          worldMap.closePopup();
+        }
+      } catch (e) {
+      }
+      
+      // Reset highlighted layer style
+      if (window.currentHighlightedLayer && mapLayer) {
+        mapLayer.resetStyle(window.currentHighlightedLayer);
+        window.currentHighlightedLayer = null;
+      }
+      
+      // Hide back to world button
+      const backButton = document.getElementById('backToWorldButton');
+      if (backButton) {
+        backButton.removeAttribute('data-visible');
+        backButton.style.display = 'none';
+        backButton.style.opacity = '0';
+        backButton.style.visibility = 'hidden';
+      }
+      
+      // Zoom back to world view
+      if (originalBounds && originalBounds.isValid()) {
+        worldMap.fitBounds(originalBounds, {
+          padding: [30, 30],
+          maxZoom: 1.5,
+          animate: true,
+          duration: 0.8
+        });
+      } else {
+        // Fallback: zoom to world view
+        worldMap.setView([10, 0], 1.5, { animate: true, duration: 0.8 });
+      }
+    }
+
+    (async function init() {
+      // Wait for DOM to be fully ready
+      if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+          document.addEventListener('DOMContentLoaded', resolve);
+        });
+      }
+      
+      // Wait a bit more to ensure all elements are rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Initialize charts with empty data first
+      initCharts();
+      
+      // Wait for charts to be initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Don't initialize map yet - wait until after first render
+      
+      connect();
+      startRefreshCountdown();
+      
+      // Fetch data immediately (non-blocking, returns cached or empty)
+      try {
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text();
+        const data = JSON.parse(text);
+        render(data);
+      } catch (err) {
+        console.error('Initial fetch failed:', err);
+        render({ aggregate: { total_threats: 0, top_threats: [] }, sources: {} });
+      }
+    })();
+  </script>
+</body>
+</html>

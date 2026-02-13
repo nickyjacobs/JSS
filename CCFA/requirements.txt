@@ -1,0 +1,13 @@
+# Caesar Cipher Decoder - Requirements
+# Dit project gebruikt alleen Python standaard library modules
+# Geen externe dependencies vereist!
+
+# Python versie vereiste
+# Python >= 3.6
+
+# Gebruikte standaard library modules:
+# - string
+# - collections
+# - typing
+# - http.server (voor web GUI)
+# - json (voor web GUI API)

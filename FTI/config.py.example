@@ -1,0 +1,7 @@
+"""
+Configuration file for FTI.
+Copy this file to config.py and add your VirusTotal API key.
+"""
+
+# Get your API key from: https://www.virustotal.com/
+VIRUSTOTAL_API_KEY = "your-api-key-here"

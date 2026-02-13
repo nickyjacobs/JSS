@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Sharing System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #7c3aed;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --card-bg-hover: rgba(30, 41, 59, 0.95);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.2);
+            --border-hover: rgba(148, 163, 184, 0.4);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--text-primary);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            font-weight: 400;
+            opacity: 0.9;
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .token-display {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Secure File Sharing System</h1>
+            <p>Veilig bestanden delen met encryptie en tijdsgebonden toegang</p>
+        </div>
+
+        <div class="card">
+            <h2>Upload Bestand</h2>
+            <div id="uploadArea" class="upload-area">
+                <p style="font-size: 1.125rem; margin-bottom: 8px;">Klik om bestand te selecteren of sleep hier</p>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Maximum bestandsgrootte: 100MB</p>
+            </div>
+            <input type="file" id="fileInput" class="hidden">
+            
+            <div id="fileInfo" class="hidden" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label>Bestandsnaam:</label>
+                    <input type="text" id="fileName" readonly>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Wachtwoord (optioneel):</label>
+                <input type="password" id="password" placeholder="Laat leeg voor geen wachtwoord">
+            </div>
+
+            <div class="form-group">
+                <label>Verlooptijd (uren):</label>
+                <input type="number" id="expiryHours" value="24" min="1" max="168">
+            </div>
+
+            <button class="btn btn-primary" onclick="uploadFile()">Upload Bestand</button>
+
+            <div id="uploadResult" class="hidden"></div>
+        </div>
+
+        <div class="card">
+            <h2>Actieve Bestanden</h2>
+            <button class="btn btn-success" onclick="loadFiles()" style="margin-bottom: 16px;">Ververs Lijst</button>
+            <ul id="fileList" class="file-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Download Bestand</h2>
+            <div class="form-group">
+                <label>Token:</label>
+                <input type="text" id="downloadToken" placeholder="Voer token in">
+            </div>
+            <div class="form-group">
+                <label>Wachtwoord (indien vereist):</label>
+                <input type="password" id="downloadPassword" placeholder="Voer wachtwoord in">
+            </div>
+            <button class="btn btn-primary" onclick="downloadFile()">Download Bestand</button>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+
+        // File input handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.value = file.name;
+                fileInfo.classList.remove('hidden');
+            }
+        }
+
+        async function uploadFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('uploadResult', 'Selecteer eerst een bestand', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('password', document.getElementById('password').value);
+            formData.append('expiry_hours', document.getElementById('expiryHours').value);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const resultDiv = document.getElementById('uploadResult');
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = `
+                        <strong>✓ Bestand geüpload!</strong><br>
+                        <div class="token-display" style="margin-top: 12px;">
+                            <strong>Token:</strong><br>
+                            ${data.data.token}<br><br>
+                            <strong>Verloopt op:</strong> ${new Date(data.data.expiry_time).toLocaleString('nl-NL')}
+                        </div>
+                    `;
+                    loadFiles();
+                } else {
+                    showAlert('uploadResult', data.error || 'Upload mislukt', 'error');
+                }
+            } catch (error) {
+                showAlert('uploadResult', 'Fout bij uploaden: ' + error.message, 'error');
+            }
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/list');
+                const data = await response.json();
+
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+
+                if (data.success && data.data.length > 0) {
+                    data.data.forEach(file => {
+                        const li = document.createElement('li');
+                        li.className = 'file-item';
+                        li.innerHTML = `
+                            <div class="file-info">
+                                <div class="file-name">${file.filename}</div>
+                                <div class="file-meta">
+                                    Grootte: ${formatFileSize(file.file_size)} | 
+                                    Downloads: ${file.download_count} | 
+                                    Verloopt: ${new Date(file.expiry_time).toLocaleString('nl-NL')}
+                                    ${file.password_protected ? ' | 🔒 Wachtwoord beschermd' : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-danger" onclick="deleteFile('${file.token}')">Verwijder</button>
+                            </div>
+                        `;
+                        fileList.appendChild(li);
+                    });
+                } else {
+                    fileList.innerHTML = '<li style="color: var(--text-muted);">Geen actieve bestanden</li>';
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        async function downloadFile() {
+            const token = document.getElementById('downloadToken').value.trim();
+            if (!token) {
+                alert('Voer een token in');
+                return;
+            }
+
+            const password = document.getElementById('downloadPassword').value.trim();
+
+            try {
+                const response = await fetch(`/api/download/${token}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: password || null })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Get filename from Content-Disposition header or use token
+                    let filename = 'download';
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    alert(`Download voltooid!\nBestand: ${filename}\nOpgeslagen in je browser download folder.`);
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Download mislukt');
+                }
+            } catch (error) {
+                alert('Fout bij downloaden: ' + error.message);
+            }
+        }
+
+        async function deleteFile(token) {
+            if (!confirm('Weet je zeker dat je dit bestand wilt verwijderen?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete/${token}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    loadFiles();
+                } else {
+                    alert(data.error || 'Verwijderen mislukt');
+                }
+            } catch (error) {
+                alert('Fout bij verwijderen: ' + error.message);
+            }
+        }
+
+        function showAlert(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.classList.remove('hidden');
+            element.className = `alert alert-${type}`;
+            element.textContent = message;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Load files on page load
+        loadFiles();
+    </script>
+</body>
+</html>
