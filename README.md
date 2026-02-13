@@ -15,10 +15,10 @@ Een uitgebreide cybersecurity multitool suite met 10 professionele security tool
 
 1. **Clone de repository**
    ```bash
-   git clone https://github.com/JOUW-USERNAME/jacops-security-suite.git
-   cd jacops-security-suite
+   git clone https://github.com/nickyjacobs/JSS.git
+   cd JSS
    ```
-   *(Vervang `JOUW-USERNAME` door je GitHub-gebruikersnaam of de organisatie.)*
+   De repo is publiek; iedereen kan clonen zonder in te loggen.
 
 2. **Python 3.9+**
    ```bash

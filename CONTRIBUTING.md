@@ -6,8 +6,8 @@ Bedankt dat je wilt bijdragen. Hieronder staan korte richtlijnen.
 
 1. **Clone de repository**
    ```bash
-   git clone https://github.com/JOUW-USERNAME/jacops-security-suite.git
-   cd jacops-security-suite
+   git clone https://github.com/nickyjacobs/JSS.git
+   cd JSS
    ```
 
 2. **Python**
