@@ -66,6 +66,8 @@ Identificeert bestandstypen op basis van magic numbers en detecteert mogelijke s
 - **GUI**: Web-gebaseerde interface op `http://localhost:8000`
 - **Features**: Magic number detection, VirusTotal integratie, entropy analyse
 
+---
+
 ### [2] Phishing Email Simulator (PES) 
 #### Unavailable at the moment
 **Directory:** `PES/`  
