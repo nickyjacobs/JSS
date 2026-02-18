@@ -5,8 +5,7 @@
 
 Een uitgebreide cybersecurity multitool suite met 10 professionele security tools. Alle tools zijn toegankelijk via een centraal interactief menu (CLI en/of web-GUI).
 
-<img width="1097" height="855" alt="image" src="https://github.com/user-attachments/assets/549e24ed-bb66-40c5-ab02-d2ff41c73057" />
-
+![SCR-20260218-owna](https://github.com/user-attachments/assets/cb4aeacb-41f0-47e2-8043-3250b6c31c3c)
 
 ## Overzicht
 
