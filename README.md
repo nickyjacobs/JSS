@@ -57,6 +57,8 @@ Je kunt ook individuele tools direct gebruiken zonder het hoofdmenu. Zie [CLI_CO
 
 ## Beschikbare Tools
 
+![SCR-20260218-pdac](https://github.com/user-attachments/assets/745e193c-5148-4fd2-8975-6c7d93c5051f)
+
 ### [1] File Type Identifier (FTI)
 **Directory:** `FTI/`  
 Identificeert bestandstypen op basis van magic numbers en detecteert mogelijke spoofing.
@@ -64,11 +66,14 @@ Identificeert bestandstypen op basis van magic numbers en detecteert mogelijke s
 - **GUI**: Web-gebaseerde interface op `http://localhost:8000`
 - **Features**: Magic number detection, VirusTotal integratie, entropy analyse
 
-### [2] Phishing Email Simulator (PES)
+### [2] Phishing Email Simulator (PES) 
+#### Unavailable at the moment
 **Directory:** `PES/`  
 Simuleert phishing email campagnes voor security awareness training.
 - **Web Interface**: Volledige web applicatie met dashboard
 - **Features**: Email templates, campagne management, resultaten tracking
+
+![SCR-20260218-pcny](https://github.com/user-attachments/assets/94355505-bf7d-4ac6-a34d-4ed84823cae9)
 
 ### [3] Network Device Scanner (NDT)
 **Directory:** `NDT/`  
@@ -76,11 +81,15 @@ Scant netwerken voor actieve apparaten en voert OSINT lookups uit.
 - **Web Interface**: Dashboard met netwerk scan resultaten op `http://localhost:5001`
 - **Features**: Automatische subnet detectie, MAC-adres identificatie, OSINT integratie, port scanning
 
+![SCR-20260218-pchm](https://github.com/user-attachments/assets/94515068-68a4-4c3d-adec-0e41da2fb87b)
+
 ### [4] Live Threat Intelligence Dashboard (LTID)
 **Directory:** `LTID/`  
 Real-time threat intelligence aggregatie van meerdere bronnen.
 - **Web Dashboard**: Op `http://localhost:8001` (FastAPI, WebSocket)
 - **Features**: Real-time threat feeds, IP/domain reputation, malware detection
+
+![SCR-20260218-pdkl](https://github.com/user-attachments/assets/0af20d73-5b61-4b9f-89c3-4b1d9f432576)
 
 ### [5] Password Policy Analyzer (PPA)
 **Directory:** `PPA/`  
@@ -89,12 +98,16 @@ Analyseert password policies tegen industry standards.
 - **Web Interface**: Flask web applicatie
 - **Features**: NIST/OWASP compliance checking, security scoring
 
+![SCR-20260218-pdzb](https://github.com/user-attachments/assets/807c5555-c5d1-41fd-a576-24168a8aa78a)
+
 ### [6] Caesar Cipher Frequency Analyzer (CCFA)
 **Directory:** `CCFA/`  
 Kraakt Caesar ciphers met frequency analysis.
 - **CLI**: Interactieve command-line decoder
 - **GUI**: Tkinter GUI applicatie
 - **Features**: Automatische shift detection, frequency analysis, multi-language support
+
+![SCR-20260218-pfoe](https://github.com/user-attachments/assets/7f184fcb-b764-461f-a0d5-9867fc474fc5)
 
 ### [7] DoS Attack Detector (DSAD)
 **Directory:** `DSAD/`  
@@ -103,11 +116,15 @@ Detecteert Denial of Service aanvallen door netwerkverkeer te monitoren.
 - **GUI**: Webinterface op `http://localhost:8005`
 - **Features**: Real-time traffic monitoring, threshold configuration, alert system
 
+![SCR-20260218-pgdo](https://github.com/user-attachments/assets/23b4ec1c-757e-46cf-a2d5-8bad8acd688f)
+
 ### [8] Secure File Sharing System (SFS)
 **Directory:** `SFS/`  
 Beveiligd bestanden delen met encryptie en tijdelijke links.
 - **Web Interface**: Op `http://localhost:8003`
 - **Features**: Encryptie, tijdslimiet, token-gebaseerde downloads
+
+![SCR-20260218-pgmp](https://github.com/user-attachments/assets/d377e3f2-b657-4c08-8129-6ae23ca7f990)
 
 ### [9] Intrusion Detection Monitor (IDM)
 **Directory:** `IDM/`  
@@ -115,6 +132,8 @@ Monitor op mislukte logins en brute-force in auth-log.
 - **CLI**: Menu met monitoring en configuratie
 - **GUI**: Webinterface op `http://localhost:8006`
 - **Features**: auth.log-monitoring, drempels, alerts
+
+![SCR-20260218-pgrv](https://github.com/user-attachments/assets/00088acf-b5bd-4604-a0d2-e03691b7ad12)
 
 ### [10] Web Vulnerability Scanner (WVS)
 **Directory:** `WVS/`  
